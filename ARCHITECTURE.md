@@ -146,16 +146,35 @@ Local Processes:
   └── Ollama                      (port 11434)
 ```
 
-## 8 Phases (15 Sessions) + CLI
+## 19 Phases (20 Sessions) + CLI
 
 ```
-Phase 1: Foundation & Scaffold       (S0-S1)   ← IN PROGRESS
-Phase 2: Adapter Layer               (S2-S3)
-Phase 3: Company Core + Tools        (S4-S5)
-Phase 4: Memory & Knowledge Base     (S6-S7)   ⭐ 3-tier
-Phase 5: Communication & Approval    (S8-S9)
-Phase 6: Interfaces (API + Telegram) (S10-S11)
-Phase 7: UI & Integration Testing    (S12-S13)
-Phase 8: Intelligence & Learning     (S14)
-+ CLI: Song song với mọi phase (CLI-Anything + custom ae commands)
+A. Nền Tảng
+  Phase 1:  Foundation & Scaffold      (S0-S1)   ← S0 ✅
+B. Engine
+  Phase 2:  Engine Interface            (S2)
+  Phase 3:  OpenClaw Adapter            (S3)
+C. Nhân Sự
+  Phase 4:  Company Database            (S4)
+  Phase 5:  Agent Lifecycle             (S5)
+  Phase 6:  Tools & Security            (S6)
+  Phase 7:  Task Engine                 (S7)
+D. Trí Nhớ
+  Phase 8:  Vector Memory               (S8)      ⭐ 3-tier
+  Phase 9:  Knowledge System            (S9)
+E. Giao Tiếp
+  Phase 10: Agent Messaging             (S10)
+  Phase 11: External Triggers           (S11)
+  Phase 12: Approval Workflow           (S12)
+F. Kết Nối
+  Phase 13: REST API                    (S13)
+  Phase 14: Cost & Realtime             (S14)
+  Phase 15: Telegram Bot                (S15)
+G. Dashboard
+  Phase 16: UI Components              (S16)
+  Phase 17: Dashboard Pages            (S17)
+H. Hoàn Thiện
+  Phase 18: End-to-End Testing         (S18)
+  Phase 19: Self-Learning              (S19)
++ CLI: Song song mọi phase (CLI-Anything + ae commands)
 ```

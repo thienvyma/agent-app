@@ -3,67 +3,61 @@
   "version": "0.0.0",
   "phase": 1,
   "current_session": 0,
-  "total_sessions": 15,
-  "total_phases": 8,
+  "total_sessions": 20,
+  "total_phases": 19,
   "last_session_date": "2026-03-23",
+  "stages": {
+    "A": { "name": "Nền Tảng", "phases": [1] },
+    "B": { "name": "Engine", "phases": [2, 3] },
+    "C": { "name": "Nhân Sự", "phases": [4, 5, 6, 7] },
+    "D": { "name": "Trí Nhớ", "phases": [8, 9] },
+    "E": { "name": "Giao Tiếp", "phases": [10, 11, 12] },
+    "F": { "name": "Kết Nối", "phases": [13, 14, 15] },
+    "G": { "name": "Dashboard", "phases": [16, 17] },
+    "H": { "name": "Hoàn Thiện", "phases": [18, 19] }
+  },
   "phases": {
-    "phase-1-foundation": {
-      "status": "in_progress",
-      "sessions": [0, 1],
-      "directory": "docs/phases/phase-1-foundation/"
-    },
-    "phase-2-adapter": {
-      "status": "not_started",
-      "sessions": [2, 3],
-      "directory": "docs/phases/phase-2-adapter/"
-    },
-    "phase-3-company": {
-      "status": "not_started",
-      "sessions": [4, 5],
-      "directory": "docs/phases/phase-3-company/"
-    },
-    "phase-4-memory": {
-      "status": "not_started",
-      "sessions": [6, 7],
-      "directory": "docs/phases/phase-4-memory/"
-    },
-    "phase-5-communication": {
-      "status": "not_started",
-      "sessions": [8, 9],
-      "directory": "docs/phases/phase-5-communication/"
-    },
-    "phase-6-interfaces": {
-      "status": "not_started",
-      "sessions": [10, 11],
-      "directory": "docs/phases/phase-6-interfaces/"
-    },
-    "phase-7-ui-testing": {
-      "status": "not_started",
-      "sessions": [12, 13],
-      "directory": "docs/phases/phase-7-ui-testing/"
-    },
-    "phase-8-intelligence": {
-      "status": "not_started",
-      "sessions": [14],
-      "directory": "docs/phases/phase-8-intelligence/"
-    }
+    "phase-01-foundation":   { "status": "in_progress",  "sessions": [0, 1] },
+    "phase-02-engine-interface": { "status": "not_started", "sessions": [2] },
+    "phase-03-openclaw-adapter": { "status": "not_started", "sessions": [3] },
+    "phase-04-company-db":   { "status": "not_started", "sessions": [4] },
+    "phase-05-agent-lifecycle": { "status": "not_started", "sessions": [5] },
+    "phase-06-tools-security": { "status": "not_started", "sessions": [6] },
+    "phase-07-task-engine":  { "status": "not_started", "sessions": [7] },
+    "phase-08-vector-memory": { "status": "not_started", "sessions": [8] },
+    "phase-09-knowledge":    { "status": "not_started", "sessions": [9] },
+    "phase-10-messaging":    { "status": "not_started", "sessions": [10] },
+    "phase-11-triggers":     { "status": "not_started", "sessions": [11] },
+    "phase-12-approval":     { "status": "not_started", "sessions": [12] },
+    "phase-13-rest-api":     { "status": "not_started", "sessions": [13] },
+    "phase-14-cost-realtime": { "status": "not_started", "sessions": [14] },
+    "phase-15-telegram":     { "status": "not_started", "sessions": [15] },
+    "phase-16-ui-components": { "status": "not_started", "sessions": [16] },
+    "phase-17-dashboard-pages": { "status": "not_started", "sessions": [17] },
+    "phase-18-e2e-testing":  { "status": "not_started", "sessions": [18] },
+    "phase-19-self-learning": { "status": "not_started", "sessions": [19] }
   },
   "modules": {
-    "foundation": { "status": "completed", "session": 0 },
-    "scaffold": { "status": "not_started", "session": 1 },
-    "adapter-interface": { "status": "not_started", "session": 2 },
-    "adapter-openclaw": { "status": "not_started", "session": 3 },
-    "company-crud": { "status": "not_started", "session": 4 },
-    "orchestrator-tools-audit": { "status": "not_started", "session": 5 },
-    "vector-db-embedding": { "status": "not_started", "session": 6 },
-    "knowledge-base": { "status": "not_started", "session": 7 },
-    "message-bus-triggers": { "status": "not_started", "session": 8 },
-    "approval-engine": { "status": "not_started", "session": 9 },
-    "dashboard-api-cost": { "status": "not_started", "session": 10 },
-    "telegram-bot": { "status": "not_started", "session": 11 },
-    "dashboard-ui": { "status": "not_started", "session": 12 },
-    "integration-test": { "status": "not_started", "session": 13 },
-    "feedback-loop": { "status": "not_started", "session": 14 }
+    "foundation":       { "status": "completed",   "session": 0 },
+    "scaffold":         { "status": "not_started",  "session": 1 },
+    "engine-interface":  { "status": "not_started", "session": 2 },
+    "openclaw-adapter":  { "status": "not_started", "session": 3 },
+    "company-db":        { "status": "not_started", "session": 4 },
+    "agent-lifecycle":   { "status": "not_started", "session": 5 },
+    "tools-security":    { "status": "not_started", "session": 6 },
+    "task-engine":       { "status": "not_started", "session": 7 },
+    "vector-memory":     { "status": "not_started", "session": 8 },
+    "knowledge-system":  { "status": "not_started", "session": 9 },
+    "agent-messaging":   { "status": "not_started", "session": 10 },
+    "external-triggers": { "status": "not_started", "session": 11 },
+    "approval-workflow": { "status": "not_started", "session": 12 },
+    "rest-api":          { "status": "not_started", "session": 13 },
+    "cost-realtime":     { "status": "not_started", "session": 14 },
+    "telegram-bot":      { "status": "not_started", "session": 15 },
+    "ui-components":     { "status": "not_started", "session": 16 },
+    "dashboard-pages":   { "status": "not_started", "session": 17 },
+    "e2e-testing":       { "status": "not_started", "session": 18 },
+    "self-learning":     { "status": "not_started", "session": 19 }
   },
   "active_agents_config": [],
   "known_issues": [],

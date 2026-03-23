@@ -61,9 +61,10 @@ docs/
 - D11: CLI-Anything + custom `ae` commands (song song mọi phase)
 - D12: 3-tier memory (OpenClaw + pgvector + Redis)
 - D13: Document maintenance workflow bắt buộc
+- D8 (updated): Restructure 8→19 phases / 15→20 sessions — mỗi session ≤ 6 files
 
 ### Lỗi Tồn Đọng: Không có
 
 ### Bước Tiếp Theo:
 → **Session 1: Project Scaffold** — Next.js + TypeScript + Docker Compose + Prisma + folder structure
-→ Xem chi tiết: `docs/phases/phase-1-foundation/README.md` → Session 1
+→ Xem chi tiết: `SESSIONS.md` → Session 1
