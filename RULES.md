@@ -137,19 +137,27 @@ Quy trình mỗi file:
 
 ---
 
-## 🦸 SUPERPOWERS SKILLS (obra/superpowers — nguyên gốc)
+## 🦸 SUPERPOWERS SKILLS (obra/superpowers — NGUYÊN GỐC, 14 skills)
 
-7 skills gốc đã cài tại `.agent/skills/`. AI PHẢI đọc SKILL.md tương ứng khi cần:
+Toàn bộ 14 skills gốc từ obra/superpowers đã cài tại `.agent/skills/`.
+AI PHẢI đọc SKILL.md tương ứng khi context phù hợp:
 
-| Khi nào | Đọc file |
-|---|---|
-| Bắt đầu code bất kỳ file nào | `.agent/skills/test-driven-development/SKILL.md` |
-| Gặp bug cần debug | `.agent/skills/systematic-debugging/SKILL.md` |
-| Trước khi nói "xong" / "pass" | `.agent/skills/verification-before-completion/SKILL.md` |
-| Lập kế hoạch implementation | `.agent/skills/writing-plans/SKILL.md` |
-| Brainstorm ý tưởng / thiết kế | `.agent/skills/brainstorming/SKILL.md` |
-| Thực thi plan theo batch | `.agent/skills/executing-plans/SKILL.md` |
-| Review code trước commit | `.agent/skills/requesting-code-review/SKILL.md` |
+| Khi nào | Skill | File |
+|---|---|---|
+| Trước khi code — làm rõ yêu cầu | brainstorming | `.agent/skills/brainstorming/SKILL.md` |
+| Lập kế hoạch implementation | writing-plans | `.agent/skills/writing-plans/SKILL.md` |
+| Thực thi plan theo batch | executing-plans | `.agent/skills/executing-plans/SKILL.md` |
+| Bắt đầu code bất kỳ file | test-driven-development | `.agent/skills/test-driven-development/SKILL.md` |
+| Gặp bug cần debug | systematic-debugging | `.agent/skills/systematic-debugging/SKILL.md` |
+| Trước khi nói "xong"/"pass" | verification-before-completion | `.agent/skills/verification-before-completion/SKILL.md` |
+| Review code trước commit | requesting-code-review | `.agent/skills/requesting-code-review/SKILL.md` |
+| Nhận feedback từ review | receiving-code-review | `.agent/skills/receiving-code-review/SKILL.md` |
+| Chạy nhiều subagent song song | dispatching-parallel-agents | `.agent/skills/dispatching-parallel-agents/SKILL.md` |
+| Subagent-driven iteration | subagent-driven-development | `.agent/skills/subagent-driven-development/SKILL.md` |
+| Tạo branch/worktree riêng | using-git-worktrees | `.agent/skills/using-git-worktrees/SKILL.md` |
+| Kết thúc branch | finishing-a-development-branch | `.agent/skills/finishing-a-development-branch/SKILL.md` |
+| Tạo skill mới | writing-skills | `.agent/skills/writing-skills/SKILL.md` |
+| Hiểu superpowers system | using-superpowers | `.agent/skills/using-superpowers/SKILL.md` |
 
 ### Session workflow: xem `.agent/workflows/session.md`
 
