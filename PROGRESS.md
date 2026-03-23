@@ -4,16 +4,17 @@
 
 ---
 
-## Session Hiện Tại: Session 0 (Foundation Documents)
+## Session Hiện Tại: Session 1 (Project Scaffold)
 **Status**: ✅ Completed
-**Ngày**: 2026-03-23
+**Ngày**: 2026-03-24
 
 ## Tổng Quan
 
 | Session | Status | Module | Commits |
 |---|---|---|---|
-| S0 - Foundation | ✅ Completed | Foundation docs + rules + skills | 17 commits |
-| S1 - Scaffold | ⬜ Not Started | Next.js + Docker | — |
+| S0 - Foundation | ✅ Completed | Foundation docs + rules + skills | 24 commits |
+| S1 - Scaffold | ✅ Completed | Next.js 15 + Docker + Prisma + NextAuth | 1 commit |
+| S2 - CLI | ⬜ Not Started | CLI-Anything + ae framework | — |
 
 ---
 
@@ -82,8 +83,33 @@ docs/
 - D12: 3-tier memory (OpenClaw + pgvector + Redis)
 - D13: Document maintenance workflow bắt buộc
 
+---
+
+## Session 1: Project Scaffold ✅
+
+### Đã làm:
+1. `package.json` — Next.js 15, React 19, Prisma, NextAuth v5, BullMQ, Socket.IO, grammY, Commander.js (635 packages)
+2. `docker-compose.yml` — PostgreSQL 16 + pgvector, Redis 7 (healthchecks + volumes)
+3. `tsconfig.json` — strict: true, noUncheckedIndexedAccess, paths @/* → src/*
+4. `src/lib/auth.ts` — NextAuth v5 Credentials (JWT, role in session, MVP admin user)
+5. `src/app/api/auth/[...nextauth]/route.ts` — NextAuth API route
+6. `src/app/layout.tsx` + `page.tsx` + `globals.css` — Basic Next.js pages
+7. `.env.example` + `.env` — 8 environment variables
+8. `jest.config.js` — ts-jest + path alias + passWithNoTests
+9. `next.config.ts` — reactStrictMode
+10. `prisma/schema.prisma` — Prisma init (PostgreSQL)
+11. 21 directories: src/core/*, src/cli/*, src/components/*, tests/*
+
+### Commit: `d462b76` — chore(scaffold): Next.js 15 + Prisma + Docker + NextAuth + folders
+
+### Verification:
+- ✅ `npx jest --passWithNoTests` → exit code 0
+- ✅ `npm run dev` → Next.js 15.5.14 Ready in 1404ms at localhost:3000
+- ✅ `npx prisma init` → prisma/schema.prisma created
+
 ### Lỗi Tồn Đọng: Không có
 
 ### Bước Tiếp Theo:
-→ **Session 1: Project Scaffold** — Next.js 15 + TypeScript + Docker Compose + Prisma + folder structure
-→ Xem chi tiết: `SESSIONS.md` → Session 1
+→ **Session 2: CLI Environment** — CLI-Anything + Commander.js + `ae status` + `ae --help`
+→ Xem chi tiết: `SESSIONS.md` → Session 2
+→ Xem chi tiết: `docs/phases/phase-02-cli/README.md`
