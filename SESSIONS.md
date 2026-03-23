@@ -2,338 +2,278 @@
 
 > File này mô tả CHÍNH XÁC mỗi session cần làm gì.
 > Trước khi bắt đầu session N, đọc mục Session N trong file này.
+> **Tổng cộng: 15 sessions, 8 phases + CLI song song**
 
 ---
 
-## Session 1: Project Scaffold
+## Phase 1: Foundation & Scaffold
 
-**Mục tiêu**: Dự án chạy được `npm run dev`, hiện trang trắng Next.js.
+### Session 0: Foundation Documents ✅
+**Đã hoàn thành** — 20 files, 6 commits. Xem PROGRESS.md.
 
-### Bước thực hiện:
-1. `npx -y create-next-app@latest ./` — Next.js 15, TypeScript, App Router, Tailwind NO, ESLint YES
+### Session 1: Project Scaffold
+
+**Mục tiêu**: `npm run dev` → Next.js chạy, Docker chạy.
+
+**Bước thực hiện**:
+1. `npx -y create-next-app@latest ./` — Next.js 15, TypeScript, App Router, NO Tailwind
 2. Cài dependencies:
    ```bash
    npm i prisma @prisma/client bullmq ioredis socket.io socket.io-client grammy next-auth
    npm i -D vitest @types/node
    ```
-3. Setup `docker-compose.yml`:
-   ```yaml
-   services:
-     postgres:
-       image: postgres:16
-       ports: ["5432:5432"]
-       environment:
-         POSTGRES_DB: agentic_enterprise
-         POSTGRES_USER: postgres
-         POSTGRES_PASSWORD: postgres
-     redis:
-       image: redis:7-alpine
-       ports: ["6379:6379"]
+3. `docker-compose.yml` (PostgreSQL 16 + pgvector + Redis 7)
+4. Prisma init + `.env`
+5. Tạo folder structure:
    ```
-4. Setup Prisma: `npx prisma init`
-5. Tạo `.env`:
+   src/core/adapter/     src/core/company/     src/core/orchestrator/
+   src/core/memory/      src/core/messaging/   src/core/approval/
+   src/core/feedback/    src/core/channels/    src/core/tools/
+   src/core/audit/       src/core/cost/        src/core/triggers/
+   src/cli/              src/types/            src/lib/
+   tests/
    ```
-   DATABASE_URL="postgresql://postgres:postgres@localhost:5432/agentic_enterprise"
-   REDIS_URL="redis://localhost:6379"
-   OPENCLAW_GATEWAY_URL="http://localhost:18789"
-   OLLAMA_URL="http://192.168.1.35:8080/v1"
-   TELEGRAM_BOT_TOKEN="..."
-   ```
-6. Tạo folder structure (directories + placeholder files):
-   ```
-   src/core/adapter/         → index.ts (export placeholder)
-   src/core/company/         → index.ts
-   src/core/orchestrator/    → index.ts
-   src/core/messaging/       → index.ts
-   src/core/approval/        → index.ts
-   src/core/feedback/        → index.ts
-   src/core/channels/        → index.ts
-   src/types/                → index.ts
-   src/lib/                  → db.ts (Prisma client singleton)
-   tests/                    → setup.ts
-   ```
+6. CLI-Anything setup (nếu có)
 
-### Test: `npm run dev` → Next.js dev server starts, page loads
-### Commit: `chore(scaffold): Next.js 15 + Prisma + Docker + folder structure`
+**Test**: `npm run dev` → OK, `docker compose up` → OK
+**Commit**: `chore(scaffold): Next.js 15 + Prisma + Docker + folder structure`
 
 ---
 
-## Session 2: IAgentEngine Interface + Tests
+## Phase 2: Adapter Layer
 
-**Mục tiêu**: Interface contract hoàn chỉnh + mock adapter + all tests pass.
+### Session 2: IAgentEngine Interface + Tests
 
-### Files tạo mới:
+**Mục tiêu**: Interface contract + mock adapter + all tests pass.
+
+**Files**:
 ```
-src/types/agent.ts          — AgentConfig, AgentStatus, AgentResponse, etc.
-src/types/engine.ts         — IAgentEngine interface
-src/core/adapter/mock-adapter.ts   — MockAdapter (for testing)
-tests/adapter/engine.test.ts       — Test suite cho IAgentEngine
-```
-
-### Interface cần define:
-```typescript
-// IAgentEngine methods:
-createAgent(config: AgentConfig): Promise<string>
-startAgent(agentId: string): Promise<void>
-stopAgent(agentId: string): Promise<void>
-destroyAgent(agentId: string): Promise<void>
-sendMessage(agentId: string, message: string): Promise<AgentResponse>
-sendMessageBetweenAgents(from: string, to: string, msg: string): Promise<void>
-getAgentStatus(agentId: string): Promise<AgentStatus>
-listActiveAgents(): Promise<AgentInfo[]>
-registerTool(agentId: string, tool: ToolDefinition): Promise<void>
-registerSkill(agentId: string, skill: SkillDefinition): Promise<void>
+src/types/agent.ts                    — AgentConfig, AgentStatus, AgentResponse
+src/types/engine.ts                   — IAgentEngine interface
+src/core/adapter/mock-adapter.ts      — MockAdapter for testing
+tests/adapter/engine.test.ts
 ```
 
-### Types cần define:
-```typescript
-AgentConfig { name, role, department, systemPrompt, model, provider, providerUrl, tools, skills, reportsTo?, schedule? }
-AgentStatus { agentId, state: IDLE|RUNNING|ERROR|STOPPED, lastActivity, sessionRef? }
-AgentResponse { content, toolCalls?, metadata? }
-AgentInfo { agentId, name, role, state }
-ToolDefinition { name, description, parameters }
-SkillDefinition { name, description, instructions }
-ScheduleConfig { type: 'always-on'|'cron'|'trigger', cronExpression?, triggerEvents? }
-```
+**Tests**: createAgent, startAgent, stopAgent, sendMessage, getAgentStatus, listActiveAgents, invalid config throws
+**CLI**: `ae agent --help` (placeholder)
+**Commit**: `feat(adapter): IAgentEngine interface + types + mock + tests`
 
-### Tests cần viết (mock adapter):
-- ✅ createAgent returns valid agentId
-- ✅ startAgent changes status to RUNNING
-- ✅ stopAgent changes status to STOPPED
-- ✅ sendMessage returns AgentResponse with content
-- ✅ sendMessageBetweenAgents doesn't throw
-- ✅ getAgentStatus returns correct state
-- ✅ listActiveAgents returns only RUNNING agents
-- ✅ createAgent with invalid config throws error
-
-### Commit: `feat(adapter): IAgentEngine interface + types + mock + tests`
-
----
-
-## Session 3: OpenClaw Adapter Implementation
+### Session 3: OpenClaw Adapter
 
 **Mục tiêu**: Adapter giao tiếp thật với OpenClaw Gateway qua HTTP.
 
-### Files tạo mới:
+**Files**:
 ```
-src/core/adapter/openclaw-adapter.ts   — OpenClawAdapter implements IAgentEngine
-src/core/adapter/adapter-factory.ts    — Factory: chọn Mock vs OpenClaw
-src/core/adapter/openclaw-client.ts    — HTTP client wrapper cho Gateway API
-tests/adapter/openclaw.test.ts         — Integration tests (cần OpenClaw chạy)
-```
-
-### OpenClaw Gateway endpoints cần wrap:
-```
-POST   /api/sessions          → createAgent (tạo session)
-DELETE /api/sessions/:id      → destroyAgent
-POST   /api/sessions/:id/chat → sendMessage
-GET    /api/sessions/:id      → getAgentStatus
-GET    /api/sessions          → listActiveAgents
-POST   /api/tools/invoke      → registerTool
+src/core/adapter/openclaw-adapter.ts  — OpenClawAdapter implements IAgentEngine
+src/core/adapter/openclaw-client.ts   — HTTP client cho Gateway API
+src/core/adapter/adapter-factory.ts   — Factory: Mock vs OpenClaw
+tests/adapter/openclaw.test.ts
 ```
 
-### Commit: `feat(adapter): OpenClaw adapter via HTTP Gateway API`
+**OpenClaw endpoints**: POST /api/sessions, DELETE /api/sessions/:id, POST /api/sessions/:id/chat, GET /api/sessions/:id, GET /api/sessions
+**Commit**: `feat(adapter): OpenClaw adapter via HTTP Gateway API`
 
 ---
 
-## Session 4: Company Module (DB + CRUD)
+## Phase 3: Company Core + Tools
+
+### Session 4: Company Module (DB + CRUD)
 
 **Mục tiêu**: CRUD company/departments/agents trong PostgreSQL.
 
-### Files tạo mới:
+**Files**:
 ```
-prisma/schema.prisma               — Full DB schema
-src/core/company/company-manager.ts — CompanyManager class
-src/core/company/hierarchy-engine.ts — Hierarchy queries
-src/app/api/company/route.ts        — Company CRUD API
-src/app/api/departments/route.ts    — Department CRUD API
-src/app/api/agents/route.ts         — Agent CRUD API
+prisma/schema.prisma                  — Full schema (Company, Dept, Agent, Task, Message, CorrectionLog, AuditLog, ToolPermission)
+src/core/company/company-manager.ts
+src/core/company/hierarchy-engine.ts
+src/app/api/company/route.ts
+src/app/api/departments/route.ts
+src/app/api/agents/route.ts
 tests/company/company-manager.test.ts
 ```
 
-### DB Models:
-- Company (id, name, goal)
-- Department (id, name, parentId → self-reference, companyId)
-- Agent (id, name, role, systemPrompt, model, provider, status, deptId, reportsTo, skills, tools, schedule, engineRef)
-- Task (id, title, description, status, priority, agentId, result)
-- Message (id, fromId, toId, content, type, createdAt)
-- CorrectionLog (id, agentId, taskId, originalOutput, correction, ruleExtracted, createdAt)
+**CLI**: `ae company create`, `ae agent create`, `ae agent list`
+**Commit**: `feat(company): DB schema + CompanyManager CRUD + API routes`
 
-### Commit: `feat(company): DB schema + CompanyManager CRUD + API routes`
+### Session 5: Orchestrator + Tools + Audit
 
----
+**Mục tiêu**: Agent lifecycle + tool permissions + audit + error recovery.
 
-## Session 5: Agent Orchestrator
-
-**Mục tiêu**: Start/stop agents lifecycle qua Adapter.
-
-### Files tạo mới:
+**Files**:
 ```
-src/core/orchestrator/agent-orchestrator.ts — Lifecycle management
-src/core/orchestrator/health-monitor.ts     — Health checks + auto-restart
+src/core/orchestrator/agent-orchestrator.ts
+src/core/orchestrator/health-monitor.ts
+src/core/orchestrator/error-recovery.ts
+src/core/orchestrator/task-decomposer.ts
+src/core/tools/tool-registry.ts
+src/core/tools/tool-permission.ts
+src/core/audit/audit-logger.ts
 tests/orchestrator/orchestrator.test.ts
+tests/tools/tool-permission.test.ts
 ```
 
-### AgentOrchestrator methods:
-```typescript
-deployAgent(agentId: string): Promise<void>     // DB config → Adapter.createAgent → start
-undeployAgent(agentId: string): Promise<void>   // stop → destroy → update DB
-redeployAgent(agentId: string): Promise<void>   // undeploy → deploy
-getDeployedAgents(): Promise<DeployedAgent[]>   // list running
-healthCheck(): Promise<HealthReport>            // check all agents
-```
-
-### Commit: `feat(orchestrator): agent lifecycle + health monitor`
+**CLI**: `ae agent deploy <id>`, `ae agent undeploy <id>`, `ae agent status`
+**Commit**: `feat(orchestrator): lifecycle + tools + audit + error recovery`
 
 ---
 
-## Session 6: Message Bus
+## Phase 4: Memory & Knowledge Base (3-Tier)
 
-**Mục tiêu**: Agents gửi/nhận messages, owner nhận reports.
+### Session 6: pgvector + Embedding Service (Tier 2)
 
-### Files:
+**Mục tiêu**: pgvector setup + embedding pipeline.
+
+**Files**:
 ```
-src/core/messaging/message-bus.ts       — BullMQ-based pub/sub
-src/core/messaging/message-router.ts    — Route by type (agent→agent, agent→owner)
-src/core/messaging/message-types.ts     — Message type definitions
+src/core/memory/vector-store.ts       — pgvector CRUD
+src/core/memory/embedding-service.ts  — Ollama embedding (local, free)
+src/core/memory/memory-types.ts
+tests/memory/vector-store.test.ts
+tests/memory/embedding-service.test.ts
+```
+
+**Note**: Tier 1 (OpenClaw MEMORY.md + Mem0) đã có sẵn, Tier 3 (Redis) đã có.
+**CLI**: `ae memory status`, `ae memory search "query"`
+**Commit**: `feat(memory): pgvector + embedding service (3-tier Tier 2)`
+
+### Session 7: Knowledge Base + Context Builder
+
+**Mục tiêu**: Auto-log + document ingestion + context building.
+
+**Files**:
+```
+src/core/memory/conversation-logger.ts
+src/core/memory/document-ingester.ts
+src/core/memory/knowledge-base.ts
+src/core/memory/context-builder.ts
+tests/memory/conversation-logger.test.ts
+tests/memory/knowledge-base.test.ts
+```
+
+**CLI**: `ae memory ingest <file>`, `ae memory list --type DOCUMENT`
+**Commit**: `feat(memory): knowledge base + context builder`
+
+---
+
+## Phase 5: Communication & Approval
+
+### Session 8: Message Bus + Triggers
+
+**Mục tiêu**: Agent messaging + external event triggers.
+
+**Files**:
+```
+src/core/messaging/message-bus.ts
+src/core/messaging/message-router.ts
+src/core/messaging/message-types.ts
+src/core/triggers/trigger-registry.ts
+src/core/triggers/webhook-handler.ts
+src/core/triggers/schedule-trigger.ts
+src/core/triggers/trigger-router.ts
 tests/messaging/message-bus.test.ts
+tests/triggers/trigger-router.test.ts
 ```
 
-### Message Types: REPORT, REQUEST, ESCALATION, CHAT, TASK_RESULT, APPROVAL_REQUEST
+**CLI**: `ae trigger list`, `ae trigger add --type cron "0 9 * * *"`
+**Commit**: `feat(messaging): message bus + external triggers`
 
-### Commit: `feat(messaging): inter-agent message bus with BullMQ`
-
----
-
-## Session 7: Approval Engine (HITL)
+### Session 9: Approval Engine (HITL)
 
 **Mục tiêu**: Tasks nhạy cảm chờ owner duyệt.
 
-### Files:
+**Files**:
 ```
-src/core/approval/approval-engine.ts    — Policy evaluation + queue
-src/core/approval/approval-policy.ts    — Rules: what needs approval
-src/core/approval/approval-queue.ts     — Pending approvals store
+src/core/approval/approval-engine.ts
+src/core/approval/approval-policy.ts
+src/core/approval/approval-queue.ts
 tests/approval/approval-engine.test.ts
 ```
 
-### Policy Rules:
-- Budget > threshold → approval required
-- Type = "send_to_customer" → approval required
-- Type = "spend_money" → approval required
-- All else → auto-approve
-
-### Commit: `feat(approval): HITL approval engine with policy rules`
+**CLI**: `ae approve list`, `ae approve accept <id>`, `ae approve reject <id>`
+**Commit**: `feat(approval): HITL approval engine + policy rules`
 
 ---
 
-## Session 8: Dashboard API Routes
+## Phase 6: Interfaces (API + Telegram)
 
-**Mục tiêu**: All REST API endpoints working with proper responses.
+### Session 10: Dashboard API + Cost Management
 
-### Files:
+**Mục tiêu**: All REST endpoints + cost tracking.
+
+**Files**:
 ```
-src/app/api/company/[id]/route.ts       — Single company ops
+src/app/api/company/[id]/route.ts
 src/app/api/departments/[id]/route.ts
 src/app/api/agents/[id]/route.ts
-src/app/api/agents/[id]/deploy/route.ts — Deploy/undeploy agent
-src/app/api/agents/[id]/message/route.ts — Send message to agent
+src/app/api/agents/[id]/deploy/route.ts
+src/app/api/agents/[id]/message/route.ts
 src/app/api/tasks/route.ts
 src/app/api/messages/route.ts
-src/app/api/approvals/route.ts          — List/approve/reject
-src/app/api/health/route.ts             — System health
-src/lib/socket.ts                       — Socket.IO setup
+src/app/api/approvals/route.ts
+src/app/api/health/route.ts
+src/core/cost/cost-tracker.ts
+src/core/cost/budget-manager.ts
+src/lib/socket.ts
 ```
 
-### Commit: `feat(api): complete dashboard API + Socket.IO realtime`
+**CLI**: `ae cost report`, `ae cost budget set <agent> <limit>`
+**Commit**: `feat(api): dashboard API + Socket.IO + cost management`
 
----
-
-## Session 9: Telegram Bot
+### Session 11: Telegram Bot
 
 **Mục tiêu**: Owner tương tác qua Telegram.
 
-### Files:
+**Files**:
 ```
-src/core/channels/telegram-bot.ts       — grammY bot setup
-src/core/channels/telegram-commands.ts  — Command handlers
-src/core/channels/telegram-approval.ts  — Inline keyboard for approvals
+src/core/channels/telegram-bot.ts
+src/core/channels/telegram-commands.ts
+src/core/channels/telegram-approval.ts
 ```
 
-### Commands:
-- `/status` — system overview
-- `/agents` — list agents + status
-- `/task <agent> <description>` — assign task
-- `/approve` — list pending approvals
-- `/report` — force daily report
-- Inline buttons: [✅ Duyệt] [✏️ Sửa] [❌ Từ chối]
-
-### Commit: `feat(telegram): bot with commands + approval inline keyboards`
+**Commands**: /status, /agents, /task, /approve, /report, /cost
+**Commit**: `feat(telegram): bot + commands + approval keyboards`
 
 ---
 
-## Session 10: Dashboard UI
+## Phase 7: UI & Integration Testing
 
-**Mục tiêu**: Web dashboard renders all data, dark mode, responsive.
+### Session 12: Dashboard UI
 
-### Files:
+**Mục tiêu**: Web dashboard localhost, dark mode, responsive.
+
+**Files**:
 ```
-src/app/page.tsx                    — Dashboard home
-src/app/company/page.tsx            — Company management
-src/app/agents/page.tsx             — Agents grid + status
-src/app/tasks/page.tsx              — Task board (kanban)
-src/app/messages/page.tsx           — Message logs
-src/components/org-chart.tsx        — Visual org chart
-src/components/agent-card.tsx       — Agent status card
-src/components/task-board.tsx       — Kanban columns
-src/components/status-badge.tsx     — Status indicators
-src/app/globals.css                 — Design system
+src/app/page.tsx, src/app/company/page.tsx, src/app/agents/page.tsx
+src/app/tasks/page.tsx, src/app/messages/page.tsx
+src/components/org-chart.tsx, src/components/agent-card.tsx
+src/components/task-board.tsx, src/components/status-badge.tsx
+src/app/globals.css
 ```
 
-### Commit: `feat(ui): dashboard with org chart + agent monitor + kanban`
+**Commit**: `feat(ui): dashboard with org chart + agent monitor + kanban`
+
+### Session 13: Integration Test
+
+**Mục tiêu**: Full flow E2E.
+
+**Test**: Create company → agents → deploy → delegate → execute → approve → verify
+**Commit**: `test(integration): full flow CEO delegate + approval`
 
 ---
 
-## Session 11: Integration Test
+## Phase 8: Intelligence & Learning
 
-**Mục tiêu**: Full flow end-to-end.
+### Session 14: Feedback Loop
 
-### Test scenario:
+**Mục tiêu**: Agent tự học từ corrections (sử dụng Memory Phase 4).
+
+**Files**:
 ```
-1. Tạo company "Nội Thất Nhanh"
-2. Tạo department "Marketing"
-3. Tạo CEO agent + Marketing agent
-4. Deploy cả 2 agents
-5. Owner gửi lệnh: "Lên kế hoạch marketing tháng 4"
-6. CEO nhận → tạo task → delegate cho Marketing
-7. Marketing thực hiện → gửi kết quả
-8. Kết quả cần approval → ApprovalEngine queue
-9. Telegram Bot gửi approval request
-10. Owner approve
-11. Task completed → Dashboard hiện correct status
-```
-
-### Commit: `test(integration): full flow CEO delegate + approval`
-
----
-
-## Session 12: Feedback Loop
-
-**Mục tiêu**: Agent tự học từ owner corrections.
-
-### Files:
-```
-src/core/feedback/feedback-loop.ts      — Process corrections → extract rules
-src/core/feedback/correction-log.ts     — CorrectionLog CRUD
-src/core/feedback/prompt-injector.ts    — Inject rules vào system prompt
+src/core/feedback/feedback-loop.ts
+src/core/feedback/correction-log.ts
+src/core/feedback/prompt-injector.ts
 tests/feedback/feedback-loop.test.ts
 ```
 
-### Flow:
-```
-Owner reject → FeedbackLoop.logCorrection(context, output, correction)
-→ CorrectionLog.save(rule)
-→ Trước task tiếp: PromptInjector.inject(agentId) → thêm rules vào prompt
-```
-
-### Commit: `feat(feedback): self-learning from owner corrections`
+**Note**: FeedbackLoop tích hợp VectorStore (Phase 4) thay vì DB thường.
+**Commit**: `feat(feedback): self-learning from corrections via vector memory`
