@@ -1,14 +1,3 @@
-ï»¿# Phase 2: CLI Environment
+# phase-02-cli
 
-> **Status**: Not Started
-> **Session**: S2
-> **Scope**: CLI-Anything + ae CLI framework + JSON output
-
----
-
-Chi tiet: Xem SESSIONS.md -> Session S2
-
-## Ghi Chu Thao Luan
-
-*(Bo sung khi bat dau phase nay)*
-
+> TODO: Chi ti?t s? du?c b? sung tru?c khi b?t d?u phase này.

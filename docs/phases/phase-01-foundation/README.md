@@ -1,14 +1,3 @@
-ï»¿# Phase 1: Foundation and Scaffold
+# phase-01-foundation
 
-> **Status**: In Progress (S0 done)
-> **Session**: S0-S1
-> **Scope**: Docs + Next.js + Docker + Prisma + folder structure
-
----
-
-Chi tiet: Xem SESSIONS.md -> Session S0-S1
-
-## Ghi Chu Thao Luan
-
-*(Bo sung khi bat dau phase nay)*
-
+> TODO: Chi ti?t s? du?c b? sung tru?c khi b?t d?u phase này.

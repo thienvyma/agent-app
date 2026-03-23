@@ -1,14 +1,3 @@
-ï»¿# Phase 4: OpenClaw Adapter
+# phase-04-openclaw-adapter
 
-> **Status**: Not Started
-> **Session**: S4
-> **Scope**: OpenClawAdapter + HTTP client + AdapterFactory
-
----
-
-Chi tiet: Xem SESSIONS.md -> Session S4
-
-## Ghi Chu Thao Luan
-
-*(Bo sung khi bat dau phase nay)*
-
+> TODO: Chi ti?t s? du?c b? sung tru?c khi b?t d?u phase này.

@@ -76,7 +76,7 @@ docs/
 ```
 
 ### Key Decisions Made:
-- D8 (updated): 20 phases / 21 sessions (Phase 2 = CLI Environment)
+- D8 (updated): 26 phases / 27 sessions (tách 6 sessions quá tải cho an toàn)
 - D10: Local-first web app ($0 cost)
 - D11: CLI-Anything + custom `ae` commands (Phase 2 dựng nền)
 - D12: 3-tier memory (OpenClaw + pgvector + Redis)

@@ -10,7 +10,7 @@ STEP 5 IF architecture changed: UPDATE ARCHITECTURE.md + DECISIONS.md + affected
 
 === CORE RULES ===
 LOCAL-FIRST: Next.js localhost, $0 cost, Ollama + OpenClaw local
-20 PHASES, 21 SESSIONS. Each session <= 6 files. Phase 2 = CLI-Anything foundation
+26 PHASES, 27 SESSIONS. Each session <= 4 files. Phase 2 = CLI-Anything foundation
 NEVER modify OpenClaw source. Only IAgentEngine → HTTP API (port 18789)
 TypeScript strict, <300 lines/file, JSDoc on every function
 TDD: test BEFORE code, ALWAYS. No code written before tests (obra/superpowers)

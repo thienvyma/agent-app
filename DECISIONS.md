@@ -117,18 +117,18 @@ CEO phân tích:
 
 ---
 
-## D8: Phân Pha — 20 Phases, 21 Sessions
+## D8: Phân Pha — 26 Phases, 27 Sessions
 
-**Quyết định**: Chia thành 20 phases, 21 sessions. Mỗi session ≤ 6 files. CLI dựng nền Phase 2, bổ sung commands mỗi phase sau.
+**Quyết định**: Chia thành 26 phases, 27 sessions. Mỗi session ≤ 4 files. CLI dựng nền Phase 2.
 
 **8 giai đoạn**:
 ```
-A. Nền Tảng  (P1-2, CLI foundation)  → B. Engine (P3-4)  → C. Nhân Sự (P5-8)
-→ D. Trí Nhớ (P9-10) → E. Giao Tiếp (P11-13) → F. Kết Nối (P14-16)
-→ G. Dashboard (P17-18) → H. Hoàn Thiện (P19-20)
+A. Nền Tảng (P1-2) → B. Engine (P3-4) → C. Nhân Sự (P5-9)
+→ D. Trí Nhớ (P10-12) → E. Giao Tiếp (P13-15) → F. Kết Nối (P16-20)
+→ G. Dashboard (P21-24) → H. Hoàn Thiện (P25-26)
 ```
 
-**Lịch sử**: 8 phases → 19 phases (session overload fix) → 20 phases (thêm Phase 2: CLI Environment).
+**Lịch sử**: 8→19→20→26 phases. Tách 6 sessions quá tải (Company DB, Knowledge, REST API, Cost+Realtime, UI Components, Dashboard Pages).
 
 ---
 

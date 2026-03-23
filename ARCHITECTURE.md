@@ -146,7 +146,7 @@ Local Processes:
   └── Ollama                      (port 11434)
 ```
 
-## 20 Phases (21 Sessions) + CLI
+## 26 Phases (27 Sessions) + CLI
 
 ```
 A. Nền Tảng
@@ -156,25 +156,31 @@ B. Engine
   Phase 3:  Engine Interface            (S3)
   Phase 4:  OpenClaw Adapter            (S4)
 C. Nhân Sự
-  Phase 5:  Company Database            (S5)
-  Phase 6:  Agent Lifecycle             (S6)
-  Phase 7:  Tools & Security            (S7)
-  Phase 8:  Task Engine                 (S8)
+  Phase 5:  Database Schema             (S5)
+  Phase 6:  Company Manager             (S6)
+  Phase 7:  Agent Lifecycle             (S7)
+  Phase 8:  Tools & Security            (S8)
+  Phase 9:  Task Engine                 (S9)
 D. Trí Nhớ
-  Phase 9:  Vector Memory               (S9)      ⭐ 3-tier
-  Phase 10: Knowledge System            (S10)
+  Phase 10: Vector Memory               (S10)     ⭐ 3-tier
+  Phase 11: Conversation Memory         (S11)
+  Phase 12: Knowledge Engine            (S12)
 E. Giao Tiếp
-  Phase 11: Agent Messaging             (S11)
-  Phase 12: External Triggers           (S12)
-  Phase 13: Approval Workflow           (S13)
+  Phase 13: Agent Messaging             (S13)
+  Phase 14: External Triggers           (S14)
+  Phase 15: Approval Workflow           (S15)
 F. Kết Nối
-  Phase 14: REST API                    (S14)
-  Phase 15: Cost & Realtime             (S15)
-  Phase 16: Telegram Bot                (S16)
+  Phase 16: Core API Routes             (S16)
+  Phase 17: Extended API Routes         (S17)
+  Phase 18: Cost Tracking               (S18)
+  Phase 19: Realtime Events             (S19)
+  Phase 20: Telegram Bot                (S20)
 G. Dashboard
-  Phase 17: UI Components              (S17)
-  Phase 18: Dashboard Pages            (S18)
+  Phase 21: Design System               (S21)
+  Phase 22: UI Components              (S22)
+  Phase 23: Core Pages                  (S23)
+  Phase 24: Data Pages & Realtime       (S24)
 H. Hoàn Thiện
-  Phase 19: End-to-End Testing         (S19)
-  Phase 20: Self-Learning              (S20)
+  Phase 25: End-to-End Testing         (S25)
+  Phase 26: Self-Learning              (S26)
 ```
