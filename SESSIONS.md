@@ -11,10 +11,10 @@
 
 **Session 0** ✅ — Foundation documents, rules v6, 14 superpowers skills (18 commits).
 
-**Session 1** — Next.js 15 + Docker Compose (PostgreSQL 16+pgvector, Redis 7) + Prisma init + folder structure.
-- Files: package.json, docker-compose.yml, tsconfig.json, src/ folders
-- Test: `npm run dev` OK, `docker compose up` OK
-- Commit: `chore(scaffold): Next.js 15 + Prisma + Docker + folders`
+**Session 1** — Next.js 15 + Docker Compose (PostgreSQL 16+pgvector, Redis 7) + Prisma init + NextAuth.js setup + folder structure.
+- Files: package.json, docker-compose.yml, tsconfig.json, src/lib/auth.ts
+- Test: `npm run dev` OK, `docker compose up` OK, NextAuth login page renders
+- Commit: `chore(scaffold): Next.js 15 + Prisma + Docker + NextAuth + folders`
 
 ### Phase 2: CLI Environment (S2)
 
@@ -50,26 +50,28 @@
 
 ### Phase 5: Database Schema (S5)
 
-**Session 5** — Prisma schema definitions: Company, Department, Agent, Task, Message tables. Migration + seed script.
+**Session 5** — Prisma schema: Company, Department, Agent, Task, Message, CorrectionLog, AuditLog, ToolPermission, ApprovalRequest (9 tables). Migration + seed script.
 - Files: prisma/schema.prisma, prisma/seed.ts, src/lib/prisma.ts
+- Tables: Company (name, config) → Department (name, parentId) → Agent (name, role, sop, model, tools, skills, status) → Task (description, status, assignedTo, parentTask) → Message (from, to, content, type) → CorrectionLog (context, wrongOutput, correction, rule) → AuditLog (agentId, action, details) → ToolPermission (agentId, toolName, granted) → ApprovalRequest (taskId, status, policy)
 - Test: `npx prisma migrate dev` + `npx prisma db seed` OK
-- Commit: `feat(company): Prisma schema + migration + seed`
+- Commit: `feat(db): 9-table Prisma schema + migration + seed`
 
 ### Phase 6: Company Manager (S6)
 
-**Session 6** — CompanyManager CRUD (create/read/update company + departments) + HierarchyEngine (org tree queries) + tests.
-- Files: src/core/company/company-manager.ts, src/core/company/hierarchy-engine.ts, tests/company/company-manager.test.ts
-- Test: create company → department → agent, query hierarchy
-- CLI: `ae company create`, `ae company info`, `ae agent list`
-- Commit: `feat(company): CompanyManager CRUD + hierarchy`
+**Session 6** — CompanyManager CRUD + HierarchyEngine + AgentConfigBuilder (tạo agent với role, SOP, model, tools, skills) + tests.
+- Files: src/core/company/company-manager.ts, src/core/company/hierarchy-engine.ts, src/core/company/agent-config-builder.ts, tests/company/company-manager.test.ts
+- Test: create company → department → agent (with SOP, model, tools), query hierarchy
+- CLI: `ae company create`, `ae company info`, `ae agent create --role "CEO" --sop "..." --model qwen`, `ae agent list`
+- Commit: `feat(company): CompanyManager + hierarchy + agent config builder`
 
 ### Phase 7: Agent Lifecycle (S7)
 
-**Session 7** — AgentOrchestrator (deploy/undeploy/redeploy) + HealthMonitor (periodic check + auto-restart) + tests.
-- Files: src/core/orchestrator/agent-orchestrator.ts, src/core/orchestrator/health-monitor.ts, tests/orchestrator/agent-orchestrator.test.ts
-- Test: deploy agent via Adapter, health check detects failure
+**Session 7** — AgentOrchestrator (deploy/undeploy/redeploy) + HealthMonitor (periodic check + auto-restart) + **CEO Agent Config** (always-on, cron poll 5 phút, delegation logic) + tests.
+- Files: src/core/orchestrator/agent-orchestrator.ts, src/core/orchestrator/health-monitor.ts, src/core/orchestrator/ceo-agent-config.ts, tests/orchestrator/agent-orchestrator.test.ts
+- CEO Config: always-on mode, cron check email/Telegram/tasks mỗi 5 phút, auto-delegate theo role hierarchy
+- Test: deploy CEO agent, health check detects failure + auto-restart, CEO cron fires
 - CLI: `ae agent deploy <id>`, `ae agent undeploy <id>`, `ae agent status <id>`
-- Commit: `feat(orchestrator): agent lifecycle + health monitor`
+- Commit: `feat(orchestrator): lifecycle + health + CEO always-on config`
 
 ### Phase 8: Tools & Security (S8)
 
@@ -93,11 +95,12 @@
 
 ### Phase 10: Vector Memory (S10)
 
-**Session 10** — pgvector extension setup + VectorStore CRUD + EmbeddingService (Ollama local) + memory types + tests.
-- Files: src/core/memory/vector-store.ts, src/core/memory/embedding-service.ts, src/types/memory.ts, tests/memory/vector-store.test.ts
-- Test: embed text → store → semantic search returns relevant result
+**Session 10** — pgvector extension setup + VectorStore CRUD + EmbeddingService (Ollama local) + **RedisSTM** (session short-term memory, real-time state cache) + memory types + tests.
+- Files: src/core/memory/vector-store.ts, src/core/memory/embedding-service.ts, src/core/memory/redis-stm.ts, src/types/memory.ts, tests/memory/vector-store.test.ts
+- RedisSTM: agent session state, conversation cache, task progress cache (volatile, auto-expire)
+- Test: embed text → store → semantic search + Redis set/get/expire
 - CLI: `ae memory status`
-- Commit: `feat(memory): pgvector + embedding service`
+- Commit: `feat(memory): pgvector + embedding + Redis STM`
 
 ### Phase 11: Conversation Memory (S11)
 
@@ -149,10 +152,11 @@
 
 ### Phase 16: Core API Routes (S16)
 
-**Session 16** — API routes cho Company CRUD + Agent CRUD + Agent deploy/undeploy + Health check.
-- Files: src/app/api/company/route.ts, src/app/api/agents/route.ts, src/app/api/health/route.ts
-- Test: curl → create company + agent OK
-- Commit: `feat(api): company + agent API routes`
+**Session 16** — API routes cho Company CRUD + Agent CRUD + Agent deploy/undeploy + Health check + **Auth middleware** (NextAuth session check).
+- Files: src/app/api/company/route.ts, src/app/api/agents/route.ts, src/app/api/health/route.ts, src/lib/api-auth.ts
+- Auth: NextAuth session → chỉ owner mới access API
+- Test: curl → create company + agent OK, unauthenticated → 401
+- Commit: `feat(api): company + agent API routes + auth middleware`
 
 ### Phase 17: Extended API Routes (S17)
 
@@ -203,10 +207,12 @@
 
 ### Phase 23: Core Pages (S23)
 
-**Session 23** — Dashboard pages: Home (overview stats), Company management, Agents grid. Connect to API.
-- Files: src/app/page.tsx, src/app/company/page.tsx, src/app/agents/page.tsx
-- Test: pages load with real API data
-- Commit: `feat(ui): home + company + agents pages`
+**Session 23** — Dashboard pages: Home (overview stats + **cost summary**), Company management, Agents grid, **Cost/Budget page**. Connect to API.
+- Files: src/app/page.tsx, src/app/company/page.tsx, src/app/agents/page.tsx, src/app/cost/page.tsx
+- Home: agent count, active tasks, total cost today, budget alerts
+- Cost page: per-agent token usage chart, budget limits, alert history
+- Test: pages load with real API data, cost page shows budget
+- Commit: `feat(ui): home + company + agents + cost pages`
 
 ### Phase 24: Data Pages & Realtime (S24)
 
