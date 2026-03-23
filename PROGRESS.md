@@ -4,7 +4,7 @@
 
 ---
 
-## Session Hiện Tại: Session 1 (Project Scaffold)
+## Session Hiện Tại: Session 2 (CLI Environment)
 **Status**: ✅ Completed
 **Ngày**: 2026-03-24
 
@@ -14,7 +14,8 @@
 |---|---|---|---|
 | S0 - Foundation | ✅ Completed | Foundation docs + rules + skills | 24 commits |
 | S1 - Scaffold | ✅ Completed | Next.js 15 + Docker + Prisma + NextAuth | 1 commit |
-| S2 - CLI | ⬜ Not Started | CLI-Anything + ae framework | — |
+| S2 - CLI | ✅ Completed | Commander.js ae CLI + ae status | 1 commit |
+| S3 - Engine Interface | ⬜ Not Started | IAgentEngine + MockAdapter | — |
 
 ---
 
@@ -113,3 +114,33 @@ docs/
 → **Session 2: CLI Environment** — CLI-Anything + Commander.js + `ae status` + `ae --help`
 → Xem chi tiết: `SESSIONS.md` → Session 2
 → Xem chi tiết: `docs/phases/phase-02-cli/README.md`
+
+---
+
+## Session 2: CLI Environment ✅
+
+### Đã làm:
+1. `tests/cli/status.test.ts` — TDD test (7 tests, viết TRƯỚC code)
+2. `src/cli/utils/output.ts` — JSON/table formatter (dual-mode output)
+3. `src/cli/commands/status.ts` — TCP port check to 4 services
+4. `src/cli/index.ts` — Commander.js entry point + 7 placeholder command groups
+5. Installed `tsx` dev dependency for CLI execution
+
+### Quyết định: Commander.js (TypeScript) thay vì CLI-Anything (Python)
+- Lý do: cùng ngôn ngữ, không cần Python dependency
+
+### Commit: `d68911e` — feat(cli): ae CLI framework + ae status + tests (7/7 pass)
+
+### Verification:
+- ✅ `npx jest tests/cli/status.test.ts` → 7/7 pass (0.37s)
+- ✅ `npx tsx src/cli/index.ts status` → valid JSON (PostgreSQL+Redis connected)
+- ✅ `npx tsx src/cli/index.ts --help` → 8 commands listed
+- ✅ `npx tsx src/cli/index.ts status --format table` → ASCII table
+- ✅ `docker compose up -d` → ae-postgres + ae-redis running
+
+### Lỗi Tồn Đọng: Không có
+
+### Bước Tiếp Theo:
+→ **Session 3: Engine Interface** — IAgentEngine + MockAdapter + types
+→ Xem chi tiết: `SESSIONS.md` → Session 3
+→ Xem chi tiết: `docs/phases/phase-03-engine-interface/README.md`
