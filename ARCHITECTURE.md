@@ -3,6 +3,14 @@
 > AI đọc file này → hiểu ngay cấu trúc toàn bộ dự án.
 > **App type**: Local-first web (Next.js localhost, $0 cost)
 
+### Tài liệu liên quan:
+- **Chi tiết sessions**: `SESSIONS.md` (26 phases / 27 sessions)
+- **Quyết định thiết kế**: `DECISIONS.md` (D1-D13 + lý do)
+- **OpenClaw API + tools**: `docs/openclaw-integration.md` (wrap vs build)
+- **Memory tech research**: `docs/MEMORY_RESEARCH.md` (pgvector, embedding models)
+- **Bản đồ tất cả docs**: `docs/INDEX.md` (cross-reference map)
+- **Yêu cầu sản phẩm**: `PRD.md` (F1-F11)
+
 ---
 
 ## Kiến Trúc 5 Tầng + CLI

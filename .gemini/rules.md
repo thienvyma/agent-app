@@ -1,8 +1,8 @@
 Agentic Enterprise — AI Rules (v6) — MUST READ FIRST
 Ref: Anthropic best practices + obra/superpowers TDD methodology
 
-=== MANDATORY 5-STEP SESSION WORKFLOW ===
-STEP 1 READ: PROGRESS.md → architecture_state.json → RULES.md → SESSIONS.md → docs/phases/phase-XX/README.md
+=== MANDATORY 6-STEP SESSION WORKFLOW ===
+STEP 1 READ: PROGRESS.md → architecture_state.json → RULES.md → SESSIONS.md → docs/phases/phase-XX/README.md → docs/INDEX.md (cross-reference map)
 STEP 2 PLAN + APPROVE: List files (max 6), tests, CLI commands → PRESENT to owner → WAIT for confirmation before coding
 STEP 3 CODE (TDD per file): Write test (FAIL) → Write code (PASS) → Refactor → Commit per file
 STEP 4 CLOSE: UPDATE PROGRESS.md + architecture_state.json → commit "docs: update progress session N"

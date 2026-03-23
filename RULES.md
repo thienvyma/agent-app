@@ -16,9 +16,14 @@
 3. RULES.md (file này)    → Nhớ luật chơi
 4. SESSIONS.md            → Session hiện tại: mấy files, tests gì, CLI gì
 5. docs/phases/phase-XX/README.md → Chi tiết + ghi chú thảo luận
+6. docs/INDEX.md           → Bản đồ docs + cross-references + docs liên quan phase
 ```
 
-> Nếu bạn KHÔNG đọc 5 file trên → bạn CHẮC CHẮN sẽ viết code sai, trùng, hoặc thiếu.
+> Nếu bạn KHÔNG đọc 6 file trên → bạn CHẮC CHẮN sẽ viết code sai, trùng, hoặc thiếu.
+>
+> **Thêm**: Khi code engine/adapter → đọc `docs/openclaw-integration.md`.
+> Khi code memory → đọc `docs/MEMORY_RESEARCH.md`.
+> Xem bảng "Docs liên quan" trong `docs/INDEX.md` để biết phase nào cần đọc doc nào.
 
 ### Bước 2: LẬP KẾ HOẠCH + XIN DUYỆT (Human-in-the-Loop)
 
