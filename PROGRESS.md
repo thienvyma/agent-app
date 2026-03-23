@@ -16,7 +16,11 @@
 - [x] Tạo architecture_state.json
 - [x] Tạo ARCHITECTURE.md
 - [x] Tạo .gemini/rules.md
-- [x] First commit
+- [x] First commit (`47083fa`)
+- [x] Tạo DECISIONS.md (9 quyết định + lý do)
+- [x] Tạo SESSIONS.md (12 sessions chi tiết)
+- [x] Tạo docs/openclaw-integration.md (feature map)
+- [x] Second commit
 
 ### Lỗi tồn đọng:
 - Không có
@@ -30,5 +34,8 @@
 - PROGRESS.md (NEW)
 - architecture_state.json (NEW)
 - ARCHITECTURE.md (NEW)
+- DECISIONS.md (NEW)
+- SESSIONS.md (NEW)
+- docs/openclaw-integration.md (NEW)
 - .gemini/rules.md (NEW)
 - .gitignore (NEW)
