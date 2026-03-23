@@ -137,31 +137,27 @@ Quy trình mỗi file:
 
 ---
 
-## 🦸 SUPERPOWERS WORKFLOW (obra/superpowers methodology)
+## 🦸 SUPERPOWERS SKILLS (obra/superpowers — nguyên gốc)
 
-Dự án áp dụng quy trình phát triển dựa trên obra/superpowers:
+7 skills gốc đã cài tại `.agent/skills/`. AI PHẢI đọc SKILL.md tương ứng khi cần:
 
+| Khi nào | Đọc file |
+|---|---|
+| Bắt đầu code bất kỳ file nào | `.agent/skills/test-driven-development/SKILL.md` |
+| Gặp bug cần debug | `.agent/skills/systematic-debugging/SKILL.md` |
+| Trước khi nói "xong" / "pass" | `.agent/skills/verification-before-completion/SKILL.md` |
+| Lập kế hoạch implementation | `.agent/skills/writing-plans/SKILL.md` |
+| Brainstorm ý tưởng / thiết kế | `.agent/skills/brainstorming/SKILL.md` |
+| Thực thi plan theo batch | `.agent/skills/executing-plans/SKILL.md` |
+| Review code trước commit | `.agent/skills/requesting-code-review/SKILL.md` |
+
+### Session workflow: xem `.agent/workflows/session.md`
+
+### 3 Iron Laws (từ superpowers):
 ```
-1. Brainstorming  → Làm rõ yêu cầu, hỏi owner, khám phá alternatives
-2. Planning       → Lập kế hoạch chi tiết (file paths, code, tests)
-3. TDD Execution  → Red → Green → Refactor → Commit (per file)
-4. Code Review    → Self-review: đúng spec? code quality OK?
-5. Verification   → Chạy tests, kiểm tra CLI, evidence > claims
-6. Documentation  → Cập nhật PROGRESS + architecture_state
-```
-
-### Superpowers Philosophy:
-- **Test-Driven Development** — Viết test trước, LUÔN LUÔN
-- **Systematic over ad-hoc** — Quy trình > đoán mò
-- **Complexity reduction** — Đơn giản là mục tiêu chính (YAGNI)
-- **Evidence over claims** — Verify trước khi tuyên bố xong
-
-### Setup (Session 1):
-```
-Cài obra/superpowers vào project nếu dùng Claude Code:
-/install-plugin obra/superpowers
-
-Hoặc thủ công — áp dụng workflow ở trên.
+TDD:          "NO PRODUCTION CODE WITHOUT A FAILING TEST FIRST"
+VERIFICATION: "NO COMPLETION CLAIMS WITHOUT FRESH VERIFICATION EVIDENCE"  
+DEBUGGING:    "NO FIXES WITHOUT ROOT CAUSE INVESTIGATION FIRST"
 ```
 
 ---
