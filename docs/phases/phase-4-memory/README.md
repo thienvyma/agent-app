@@ -1,163 +1,137 @@
-# Phase 4: Memory & Knowledge Base (Sessions 6–7) ⭐ NEW
+# Phase 4: Memory & Knowledge Base (Sessions 6–7) — 3-Tier Architecture
 
 > **Status**: ⬜ Not Started
-> **Sessions**: S6 (Vector DB + Embedding), S7 (Conversation Logger + Knowledge Base)
+> **Sessions**: S6 (App-Level Vector DB + Embedding), S7 (Knowledge Base + Context Builder)
 > **Phụ thuộc**: Phase 3 hoàn tất
 
 ---
 
 ## Mục Tiêu
 
-Hệ thống trí nhớ cho toàn bộ công ty — agents nhớ mọi thứ, học từ kinh nghiệm, chia sẻ kiến thức.
+Xây tầng 2 (app-level) của hệ thống memory 3-tier. Tier 1 (OpenClaw) đã có sẵn.
 
-## Tại Sao Phase Này Phải Sớm (Không Phải Cuối)
+## 3-Tier Memory Architecture
 
-Ý tưởng gốc nói rõ: *"Mọi cuộc trò chuyện, tài liệu, và corrections đều phải embed vào Vector DB"*
+```
+Tier 1: OpenClaw Native (PER-AGENT) — ĐÃ CÓ SẴN!
+  ├── MEMORY.md — curated long-term facts
+  ├── memory/YYYY-MM-DD.md — daily logs
+  ├── Hybrid search: BM25 + vector
+  └── Mem0 plugin: extract structured facts, chống mất khi compaction
 
-- Agents CẦN memory TRƯỚC khi giao tiếp hiệu quả (Phase 5)
-- Approval/Feedback cần memory để tìm relevant context (Phase 5, 8)
-- Không có memory → agents bị "mất trí nhớ" mỗi session mới
+Tier 2: App-Level (COMPANY-WIDE) — TA TỰ BUILD ← PHASE NÀY
+  ├── pgvector (PostgreSQL extension)
+  ├── ConversationLogger — log tất cả interactions
+  ├── DocumentIngester — tài liệu công ty
+  ├── KnowledgeBase — unified semantic search
+  └── ContextBuilder — build context cho mỗi task
 
-## Session 6: Vector DB + Embedding Service
+Tier 3: Session STM (REAL-TIME) — DÙNG REDIS ĐÃ CÓ
+  └── Volatile session state
+```
+
+## Tại Sao Tier 1 Đủ Cho Per-Agent Nhưng Cần Tier 2?
+
+OpenClaw memory chỉ biết per-agent — agent A không thấy MEMORY.md của agent B.
+
+**Cần Tier 2 cho**:
+- Cross-agent search: CEO tìm kinh nghiệm của Marketing agent
+- Company knowledge base: bảng giá vật tư, SOP, tài liệu
+- Owner corrections: CorrectionLog áp dụng cho NHIỀU agents
+- Audit trail: toàn bộ actions của tất cả agents
+
+## Session 6: pgvector + Embedding Service
 
 **Mục tiêu**: pgvector setup + embedding pipeline hoạt động
 
 **Files tạo mới**:
 ```
 src/core/memory/vector-store.ts         — pgvector CRUD (store/search/delete)
-src/core/memory/embedding-service.ts    — Text → embedding vector (via Ollama)
+src/core/memory/embedding-service.ts    — Text → vector (via Ollama local)
 src/core/memory/memory-types.ts         — MemoryEntry, SearchResult types
 tests/memory/vector-store.test.ts
 tests/memory/embedding-service.test.ts
 ```
 
-**Tech choice: pgvector**
-- Extension cho PostgreSQL → không cần DB mới
-- Tích hợp với Prisma (via `@prisma/client` + raw SQL for vector ops)
-- Semantic search + keyword search cùng 1 DB
-- Production-ready, used by OpenAI, Supabase
-
-**Prisma schema bổ sung**:
+**Prisma bổ sung**:
 ```prisma
 model MemoryEntry {
-  id          String   @id @default(uuid())
-  agentId     String?  // null = shared company memory
-  type        MemoryType // CONVERSATION, DOCUMENT, CORRECTION, FACT
-  content     String   // raw text
-  embedding   Unsupported("vector(1536)")?  // pgvector
-  metadata    Json     // { source, taskId, channel, tags }
-  createdAt   DateTime @default(now())
+  id        String     @id @default(uuid())
+  agentId   String?    // null = shared company memory
+  type      MemoryType
+  content   String
+  embedding Unsupported("vector(1536)")?
+  metadata  Json       // { source, taskId, channel, tags }
+  createdAt DateTime   @default(now())
 }
 
 enum MemoryType {
-  CONVERSATION
-  DOCUMENT
-  CORRECTION
-  FACT
-  PROCEDURE
+  CONVERSATION  // agent interactions
+  DOCUMENT      // company docs
+  CORRECTION    // learned rules
+  FACT          // extracted facts
+  PROCEDURE     // SOPs, workflows
 }
 ```
 
-**Embedding Service**:
+**Embedding Service** (Ollama local):
 ```typescript
-// Dùng Ollama embedding model (local, free)
 class EmbeddingService {
+  // Dùng Ollama nomic-embed-text hoặc bge-m3 (local, free)
   async embed(text: string): Promise<number[]>
   async embedBatch(texts: string[]): Promise<number[][]>
-  async search(query: string, topK: number): Promise<SearchResult[]>
 }
 ```
 
-## Session 7: Conversation Logger + Knowledge Base
-
-**Mục tiêu**: Auto-log mọi interaction + ingest tài liệu + semantic search
-
-**Files tạo mới**:
+**CLI commands** (song song):
 ```
-src/core/memory/conversation-logger.ts  — Auto-log agent interactions
-src/core/memory/document-ingester.ts    — Upload + chunk + embed tài liệu
-src/core/memory/knowledge-base.ts       — Unified query interface
-src/core/memory/context-builder.ts      — Build relevant context cho agent
+ae memory status              — vector DB stats
+ae memory search "query"      — semantic search
+ae memory ingest <file>       — ingest document
+ae memory list --type DOCUMENT
+```
+
+## Session 7: Knowledge Base + Context Builder
+
+**Mục tiêu**: Auto-log interactions + ingest documents + build context
+
+**Files**:
+```
+src/core/memory/conversation-logger.ts  — Hook vào MessageBus → auto-log + embed
+src/core/memory/document-ingester.ts    — Upload → chunk → embed → store
+src/core/memory/knowledge-base.ts       — Unified search (keyword + vector)
+src/core/memory/context-builder.ts      — Build context per agent per task
 tests/memory/conversation-logger.test.ts
 tests/memory/knowledge-base.test.ts
-```
-
-**Conversation Logger**:
-```typescript
-// Tự động hook vào MessageBus — log MỌI interaction
-class ConversationLogger {
-  // Gọi sau mỗi message send/receive
-  async log(interaction: {
-    fromAgentId: string,
-    toAgentId: string,
-    message: string,
-    response: string,
-    taskId?: string,
-    channel: 'internal' | 'telegram' | 'dashboard'
-  }): Promise<void>
-  // → Embed + store vào VectorStore
-}
-```
-
-**Document Ingester**:
-```typescript
-// Owner upload tài liệu → chunk → embed → store
-class DocumentIngester {
-  async ingest(file: File, metadata: DocMetadata): Promise<void>
-  // 1. Detect type (PDF, MD, DOCX, CSV)
-  // 2. Extract text
-  // 3. Chunk (500 tokens, 100 overlap)
-  // 4. Embed each chunk
-  // 5. Store in VectorStore with metadata
-
-  async ingestText(text: string, metadata: DocMetadata): Promise<void>
-  // Direct text ingestion (for web content, API data, etc.)
-}
-```
-
-**Knowledge Base** (unified search):
-```typescript
-class KnowledgeBase {
-  // Search across all memory types
-  async search(query: string, filters?: {
-    agentId?: string,       // agent-specific or shared
-    type?: MemoryType[],    // CONVERSATION, DOCUMENT, etc.
-    dateRange?: DateRange,
-    topK?: number
-  }): Promise<SearchResult[]>
-}
 ```
 
 **Context Builder** (quan trọng nhất):
 ```typescript
 class ContextBuilder {
-  // Trước mỗi task, build context from memories
-  async buildContext(agentId: string, taskDescription: string): Promise<string>
-  // 1. Search relevant conversations (last N + semantic match)
-  // 2. Search relevant documents
-  // 3. Search relevant corrections/rules
-  // 4. Combine + rank by relevance
-  // 5. Return formatted context string for injection vào system prompt
+  async buildContext(agentId: string, taskDescription: string): Promise<string> {
+    // 1. Tier 2: Search relevant conversations from pgvector
+    const conversations = await kb.search(taskDescription, { type: 'CONVERSATION', topK: 5 })
+    
+    // 2. Tier 2: Search relevant documents
+    const docs = await kb.search(taskDescription, { type: 'DOCUMENT', topK: 3 })
+    
+    // 3. Tier 2: Search relevant corrections/rules
+    const rules = await kb.search(taskDescription, { type: 'CORRECTION', agentId, topK: 10 })
+    
+    // 4. Tier 3: Get current session state from Redis
+    const sessionState = await redis.get(`session:${agentId}`)
+    
+    // 5. Combine + rank by relevance + format
+    return formatContext({ conversations, docs, rules, sessionState })
+    
+    // NOTE: Tier 1 (OpenClaw MEMORY.md) is handled by OpenClaw itself
+    // → injected automatically by OpenClaw at session start
+  }
 }
-```
-
-**Flow tích hợp**:
-```
-Owner hoặc Agent tạo message
-  → MessageBus phát message
-  → ConversationLogger hook: embed + store
-
-Owner upload tài liệu
-  → API upload → DocumentIngester: chunk + embed + store
-
-Agent nhận task mới
-  → ContextBuilder.buildContext(agentId, taskDescription)
-  → Inject relevant memories vào system prompt
-  → Agent thực hiện task VỚI context đầy đủ
 ```
 
 ---
 
 ## Ghi Chú Thảo Luận
 
-*(Bổ sung khi thảo luận thêm — đặc biệt về embedding model choice, chunk strategy, retrieval method)*
+*(Bổ sung khi thảo luận thêm — đặc biệt: embedding model choice, chunk strategy, Mem0 plugin config)*

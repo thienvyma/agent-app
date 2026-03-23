@@ -101,33 +101,34 @@ CEO phân tích:
 
 ## D7: Tech Stack
 
-**Quyết định**: Next.js 15 + PostgreSQL + BullMQ + OpenClaw npm
+**Quyết định**: Next.js 15 + PostgreSQL + pgvector + BullMQ + OpenClaw npm + Ollama local
 
 **Lý do lựa chọn**:
 | Tech | Lý do chọn | Alternatives considered |
 |---|---|---|
 | Next.js 15 | Full-stack, SSR, API routes | Express (không có UI) |
-| PostgreSQL | Relational cho org chart, SaaS-ready | SQLite (không scale) |
+| PostgreSQL + pgvector | Relational + vector cùng DB | Qdrant (thêm service), Chroma (chỉ prototyping) |
 | Prisma | Type-safe ORM, migrations | Drizzle (newer, less ecosystem) |
-| BullMQ + Redis | Queue cho agent tasks | RabbitMQ (too heavy) |
+| BullMQ + Redis | Queue + STM memory | RabbitMQ (too heavy) |
+| Ollama | AI model + embedding local, $0 | OpenAI API (tốn tiền) |
 | Socket.IO | Realtime dashboard updates | WebSocket raw (no fallback) |
 | grammY | Telegram bot, lightweight | Telegraf (bigger) |
+| CLI-Anything | Agent-native CLI, hỗ trợ OpenClaw | Tự build from scratch |
 
 ---
 
-## D8: Phân Pha — 12 Sessions
+## D8: Phân Pha — 8 Phases, 15 Sessions
 
-**Quyết định**: Chia thành 12 sessions, mỗi session = 1 module.
+**Quyết định**: Chia thành 8 phases, 15 sessions, CLI xây song song.
 
 **Thứ tự dựa trên dependency**:
 ```
-Foundation (S0) → Scaffold (S1) → Interface (S2) → Adapter (S3)
-→ Company DB (S4) → Orchestrator (S5) → MessageBus (S6)
-→ Approval (S7) → Dashboard API (S8) → Telegram (S9)
-→ Dashboard UI (S10) → Integration Test (S11) → Feedback (S12)
+Phase 1: Foundation (S0-S1) → Phase 2: Adapter (S2-S3)
+→ Phase 3: Company + Tools (S4-S5) → Phase 4: Memory (S6-S7)
+→ Phase 5: Communication (S8-S9) → Phase 6: Interfaces (S10-S11)
+→ Phase 7: UI + Testing (S12-S13) → Phase 8: Intelligence (S14)
++ CLI: Song song với mọi phase
 ```
-
-**Lý do thứ tự**: Mỗi module chỉ phụ thuộc vào modules trước nó.
 
 ---
 
@@ -141,3 +142,74 @@ Foundation (S0) → Scaffold (S1) → Interface (S2) → Adapter (S3)
 | AutoGen | Group discussion, human-in-the-loop | Flat structure |
 | Lindy AI | Always-on employees, SaaS model, dashboard | Closed source |
 | NemoClaw | Loose-coupling with OpenClaw, adapter pattern | NVIDIA lock-in |
+
+---
+
+## D10: Deployment — Local-First Web App
+
+**Quyết định**: Next.js chạy trên localhost, tất cả services local.
+
+**Lý do**:
+- $0 chi phí — Ollama local, OpenClaw local, PostgreSQL Docker, Redis Docker
+- Tận dụng tối đa PC resources (GPU cho Ollama, CPU/RAM cho agents)
+- Kiến trúc sẵn sàng deploy cloud — chỉ cần đổi `.env`
+- Không cần domain, SSL, hosting cho MVP
+
+**Phương án đã loại**:
+- Cloud SaaS: tốn hosting, không dùng được Ollama local
+- Electron app: phải rewrite khi muốn SaaS, heavier stack
+
+---
+
+## D11: CLI Strategy — CLI-Anything + Custom `ae` Commands
+
+**Quyết định**: Xây CLI song song với mọi phase, dùng CLI-Anything + custom commands.
+
+**Lý do**:
+- CLI-Anything (13k+ ⭐) — hỗ trợ chính OpenClaw, tự tạo CLI cho bất kỳ app
+- Agent nội bộ cần CLI environment để self-manage (deploy/undeploy agents, query status)
+- JSON output cho agent consumption
+- CLI = testable, scriptable, automatable
+
+**Commands planned**:
+```
+ae agent create/deploy/undeploy/status/list
+ae task assign/list/approve/reject
+ae company info/create
+ae memory search/ingest
+ae cost report
+```
+
+---
+
+## D12: Memory Architecture — 3-Tier (Học từ OpenClaw)
+
+**Quyết định**: Tận dụng OpenClaw built-in memory + pgvector app-level + Redis STM.
+
+**Lý do**:
+- OpenClaw đã có memory system rất tốt (MEMORY.md + daily logs + hybrid search)
+- Không cần rebuild cái đã có — chỉ cần bổ sung phần company-level
+- Mem0 plugin cho OpenClaw chống mất context khi compaction
+- pgvector cho cross-agent search (company KB, corrections — OpenClaw không có)
+
+**3-Tier Architecture**:
+| Tier | Storage | Scope | Quản lý bởi |
+|---|---|---|---|
+| 1. Per-Agent | OpenClaw MEMORY.md + Mem0 | Individual agent | OpenClaw (tự động) |
+| 2. Company | pgvector (PostgreSQL) | Cross-agent | App (tự build) |
+| 3. Session | Redis | Real-time, volatile | App (tự build) |
+
+**Khác biệt so với plan cũ**: Không tự build TẤT CẢ memory — tận dụng OpenClaw cho tier 1.
+
+---
+
+## D13: Document Maintenance — Bắt buộc mọi session
+
+**Quyết định**: Mọi AI session phải đọc + cập nhật docs theo workflow chuẩn.
+
+**Lý do**:
+- Dự án lớn → context dễ mất giữa các sessions
+- JSON (architecture_state.json) ít bị AI phá hơn Markdown
+- Anthropic engineers khuyến nghị "Single Source of Truth" — docs trong project
+
+**Workflow**: Xem chi tiết tại RULES.md → "Document Maintenance Rules"

@@ -1,22 +1,27 @@
 # 🏗️ ARCHITECTURE.md — Sơ Đồ Tham Chiếu
 
 > AI đọc file này → hiểu ngay cấu trúc toàn bộ dự án.
+> **App type**: Local-first web (Next.js localhost, $0 cost)
 
 ---
 
-## Kiến Trúc 5 Tầng
+## Kiến Trúc 5 Tầng + CLI
 
 ```
 ┌─────────────────────────────────────────────────────────┐
+│ CLI Layer (song song mọi phase)                         │
+│   └── ae commands (agent, task, company, memory, cost)  │
+│       → JSON output cho agent consumption               │
+├─────────────────────────────────────────────────────────┤
 │ TẦNG 5: UI Layer                                        │
-│   ├── Next.js Dashboard (org chart, agent monitor, logs)│
+│   ├── Next.js Dashboard localhost (org chart, monitor)   │
 │   └── Telegram Bot (commands, reports, approvals)       │
 ├─────────────────────────────────────────────────────────┤
 │ TẦNG 4: Company Module                                  │
 │   ├── CompanyManager (departments, roles, hierarchy)    │
 │   ├── AgentLifecycle (create, configure, deploy)        │
 │   ├── MessageBus (agent↔agent, agent↔owner)             │
-│   ├── TaskEngine (assign, track, decompose, escalate)   │
+│   ├── TaskEngine (assign, decompose, track, escalate)   │
 │   ├── ApprovalEngine (HITL, owner approve/reject)       │
 │   └── TriggerRegistry (external webhooks, email, cron)  │
 ├─────────────────────────────────────────────────────────┤
@@ -30,19 +35,29 @@
 │   ├── FeedbackLoop (corrections → self-learning)        │
 │   └── TaskDecomposer (CEO auto-split complex tasks)     │
 ├─────────────────────────────────────────────────────────┤
-│ TẦNG 2: Memory & Knowledge Layer ⭐ NEW                 │
-│   ├── VectorStore (pgvector — semantic search)          │
-│   ├── EmbeddingService (text → vector via Ollama)       │
-│   ├── ConversationLogger (auto-log + embed interactions)│
-│   ├── DocumentIngester (upload → chunk → embed → store) │
-│   ├── KnowledgeBase (unified search across all memory)  │
-│   └── ContextBuilder (build relevant context per task)  │
+│ TẦNG 2: Memory & Knowledge Layer (3-Tier)               │
+│   ┌─ Tier 1: OpenClaw Native (per-agent) ─────────────┐│
+│   │  MEMORY.md + daily logs + Mem0 plugin              ││
+│   │  → Hybrid search: BM25 + vector                   ││
+│   │  → Quản lý: OpenClaw tự động                      ││
+│   ├─ Tier 2: App-Level (company-wide) ────────────────┤│
+│   │  pgvector (PostgreSQL extension)                   ││
+│   │  ConversationLogger, DocumentIngester              ││
+│   │  KnowledgeBase, ContextBuilder, CorrectionLog      ││
+│   │  → Quản lý: App tự build                          ││
+│   ├─ Tier 3: Session (real-time) ─────────────────────┤│
+│   │  Redis — volatile, mất khi session end             ││
+│   │  → Quản lý: App tự build                          ││
+│   └────────────────────────────────────────────────────┘│
 ├─────────────────────────────────────────────────────────┤
 │ TẦNG 1: Adapter Layer (RANH GIỚI VỚI OPENCLAW)         │
 │   ├── IAgentEngine (interface contract — swap-able)     │
 │   ├── OpenClawAdapter (HTTP → Gateway :18789)           │
 │   └── OpenClaw (npm package — KHÔNG SỬA SOURCE)        │
 └─────────────────────────────────────────────────────────┘
+           ↕                    ↕
+    Ollama Local          PostgreSQL + Redis
+    (AI + Embedding)      (Docker Compose)
 ```
 
 ## IAgentEngine Interface (Ranh Giới)
@@ -62,27 +77,25 @@ interface IAgentEngine {
 }
 ```
 
-## Memory Flow (NEW)
+## Memory Flow (3-Tier)
 
 ```
-Any Interaction (agent↔agent, owner↔agent)
-  → ConversationLogger.log()
-  → EmbeddingService.embed(text)
-  → VectorStore.store(embedding, metadata)
-
-Owner uploads document
-  → DocumentIngester.ingest()
-  → Chunk (500 tokens, 100 overlap)
-  → EmbeddingService.embedBatch()
-  → VectorStore.storeBatch()
-
-Agent receives new task
-  → ContextBuilder.buildContext(agentId, taskDesc)
-    → VectorStore.search(taskDesc) → relevant conversations
-    → VectorStore.search(taskDesc, type=DOCUMENT) → relevant docs
-    → VectorStore.search(taskDesc, type=CORRECTION) → relevant rules
+Agent nhận task mới:
+  ← Tier 1: OpenClaw MEMORY.md (per-agent facts, preferences)
+  ← Tier 2: App pgvector → ContextBuilder.buildContext()
+       → Search relevant conversations (episodic)
+       → Search relevant documents (semantic)
+       → Search relevant corrections (procedural)
+  ← Tier 3: Redis (current session state)
   → Inject combined context vào system prompt
-  → Agent executes task WITH full context
+  → Agent executes task
+
+After task:
+  → Tier 1: OpenClaw auto-saves to MEMORY.md (agent manages)
+  → Tier 2: ConversationLogger → embed → pgvector
+  → Tier 2: AuditLogger → log action
+  → Tier 2: CostTracker → log tokens
+  → Tier 3: Redis → update session state
 ```
 
 ## Communication Patterns
@@ -105,29 +118,44 @@ CEO Agent (always-on, cron every 5 min)
 ## Data Flow
 
 ```
-Owner (Telegram/Dashboard)
-  → API Route (Next.js)
+Owner (Telegram / Dashboard / CLI)
+  → API Route (Next.js) or CLI command
   → CompanyManager / AgentOrchestrator
-  → ContextBuilder.buildContext()          ← Memory injection
+  → ContextBuilder.buildContext()        ← Memory Tier 2 injection
   → IAgentEngine.sendMessage()
   → OpenClawAdapter
   → HTTP POST → OpenClaw Gateway :18789
   → OpenClaw Agent Session
+      ← OpenClaw MEMORY.md loaded       ← Memory Tier 1
   → Response back through same chain
-  → ConversationLogger.log()              ← Memory logging
-  → AuditLogger.log()                     ← Audit logging
-  → CostTracker.logUsage()                ← Cost tracking
+  → ConversationLogger.log()            ← Memory Tier 2 save
+  → AuditLogger.log()
+  → CostTracker.logUsage()
 ```
 
-## 8 Phases (15 Sessions)
+## Local Infrastructure
 
 ```
-Phase 1: Foundation & Scaffold       (S0-S1)
+Docker Compose:
+  ├── PostgreSQL 16 + pgvector    (port 5432)
+  └── Redis 7                     (port 6379)
+
+Local Processes:
+  ├── Next.js dev server          (port 3000)
+  ├── OpenClaw Gateway            (port 18789)
+  └── Ollama                      (port 11434)
+```
+
+## 8 Phases (15 Sessions) + CLI
+
+```
+Phase 1: Foundation & Scaffold       (S0-S1)   ← IN PROGRESS
 Phase 2: Adapter Layer               (S2-S3)
 Phase 3: Company Core + Tools        (S4-S5)
-Phase 4: Memory & Knowledge Base     (S6-S7)  ⭐
+Phase 4: Memory & Knowledge Base     (S6-S7)   ⭐ 3-tier
 Phase 5: Communication & Approval    (S8-S9)
 Phase 6: Interfaces (API + Telegram) (S10-S11)
 Phase 7: UI & Integration Testing    (S12-S13)
 Phase 8: Intelligence & Learning     (S14)
++ CLI: Song song với mọi phase (CLI-Anything + custom ae commands)
 ```
