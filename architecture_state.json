@@ -4,80 +4,66 @@
   "phase": 0,
   "current_session": 0,
   "total_sessions": 0,
+  "total_phases": 8,
   "last_session_date": "2026-03-23",
-  "modules": {
-    "foundation": {
-      "status": "completed",
-      "session": 0,
-      "files": [
-        "PRD.md",
-        "RULES.md",
-        "PROGRESS.md",
-        "architecture_state.json",
-        "ARCHITECTURE.md",
-        ".gemini/rules.md"
-      ]
+  "phases": {
+    "phase-1-foundation": {
+      "status": "in_progress",
+      "sessions": [0, 1],
+      "directory": "docs/phases/phase-1-foundation/"
     },
-    "scaffold": {
+    "phase-2-adapter": {
       "status": "not_started",
-      "session": 1,
-      "files": []
+      "sessions": [2, 3],
+      "directory": "docs/phases/phase-2-adapter/"
     },
-    "adapter-interface": {
+    "phase-3-company": {
       "status": "not_started",
-      "session": 2,
-      "files": []
+      "sessions": [4, 5],
+      "directory": "docs/phases/phase-3-company/"
     },
-    "adapter-openclaw": {
+    "phase-4-memory": {
       "status": "not_started",
-      "session": 3,
-      "files": []
+      "sessions": [6, 7],
+      "directory": "docs/phases/phase-4-memory/"
     },
-    "company": {
+    "phase-5-communication": {
       "status": "not_started",
-      "session": 4,
-      "files": []
+      "sessions": [8, 9],
+      "directory": "docs/phases/phase-5-communication/"
     },
-    "orchestrator": {
+    "phase-6-interfaces": {
       "status": "not_started",
-      "session": 5,
-      "files": []
+      "sessions": [10, 11],
+      "directory": "docs/phases/phase-6-interfaces/"
     },
-    "messaging": {
+    "phase-7-ui-testing": {
       "status": "not_started",
-      "session": 6,
-      "files": []
+      "sessions": [12, 13],
+      "directory": "docs/phases/phase-7-ui-testing/"
     },
-    "approval": {
+    "phase-8-intelligence": {
       "status": "not_started",
-      "session": 7,
-      "files": []
-    },
-    "dashboard-api": {
-      "status": "not_started",
-      "session": 8,
-      "files": []
-    },
-    "telegram-bot": {
-      "status": "not_started",
-      "session": 9,
-      "files": []
-    },
-    "dashboard-ui": {
-      "status": "not_started",
-      "session": 10,
-      "files": []
-    },
-    "integration-test": {
-      "status": "not_started",
-      "session": 11,
-      "files": []
-    },
-    "feedback-loop": {
-      "status": "not_started",
-      "session": 12,
-      "files": []
+      "sessions": [14],
+      "directory": "docs/phases/phase-8-intelligence/"
     }
+  },
+  "modules": {
+    "foundation": { "status": "completed", "session": 0 },
+    "scaffold": { "status": "not_started", "session": 1 },
+    "adapter-interface": { "status": "not_started", "session": 2 },
+    "adapter-openclaw": { "status": "not_started", "session": 3 },
+    "company-crud": { "status": "not_started", "session": 4 },
+    "orchestrator-tools-audit": { "status": "not_started", "session": 5 },
+    "vector-db-embedding": { "status": "not_started", "session": 6 },
+    "knowledge-base": { "status": "not_started", "session": 7 },
+    "message-bus-triggers": { "status": "not_started", "session": 8 },
+    "approval-engine": { "status": "not_started", "session": 9 },
+    "dashboard-api-cost": { "status": "not_started", "session": 10 },
+    "telegram-bot": { "status": "not_started", "session": 11 },
+    "dashboard-ui": { "status": "not_started", "session": 12 },
+    "integration-test": { "status": "not_started", "session": 13 },
+    "feedback-loop": { "status": "not_started", "session": 14 }
   },
   "active_agents_config": [],
   "known_issues": [],
@@ -85,9 +71,11 @@
     "runtime": "Node.js 22+",
     "framework": "Next.js 15",
     "language": "TypeScript 5+ strict",
-    "database": "PostgreSQL + Prisma",
+    "database": "PostgreSQL + Prisma + pgvector",
     "queue": "BullMQ (Redis)",
     "agent_engine": "OpenClaw (npm, HTTP API port 18789)",
+    "vector_db": "pgvector (PostgreSQL extension)",
+    "embedding": "Ollama embedding model (local)",
     "realtime": "Socket.IO",
     "telegram": "grammY",
     "auth": "NextAuth.js",
