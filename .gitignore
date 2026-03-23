@@ -41,3 +41,5 @@ coverage/
 
 # Superpowers framework (cloned repo)
 .superpowers/
+
+/src/generated/prisma
