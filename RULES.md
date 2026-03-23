@@ -166,6 +166,76 @@ Hoặc thủ công — áp dụng workflow ở trên.
 
 ---
 
+## ✋ VERIFICATION IRON LAW (obra/superpowers)
+
+```
+KHÔNG ĐƯỢC TUYÊN BỐ "XONG" KHI CHƯA CÓ BẰNG CHỨNG
+```
+
+Trước khi nói "tests pass", "đã fix", "hoàn thành":
+1. **CHẠY** lệnh verify (test, build, lint)
+2. **ĐỌC** toàn bộ output
+3. **XÁC NHẬN** output khớp với claim
+4. CHỈ SAU ĐÓ mới tuyên bố kết quả
+
+| Claim | Cần có | KHÔNG đủ |
+|---|---|---|
+| "Tests pass" | Output: 0 failures | "Chắc là pass" |
+| "Build OK" | Exit code 0 | "Linter pass rồi" |
+| "Bug fixed" | Test gốc pass | "Đã sửa code" |
+| "Session xong" | Checklist ✅ tất cả | "Nghĩ là xong" |
+
+**Red flags — DỪNG LẠI nếu đang dùng từ**: "chắc là", "có lẽ", "nên được", "hình như".
+
+---
+
+## 🔍 SYSTEMATIC DEBUGGING (obra/superpowers 4-phase)
+
+Khi gặp bug, PHẢI theo 4 phase — KHÔNG được nhảy thẳng vào fix:
+
+```
+Phase 1: TÌM NGUYÊN NHÂN GỐC
+  → Đọc error message, stack trace, logs
+  → Tái hiện lỗi (reproduce)
+  → Thu hẹp phạm vi (narrow down)
+
+Phase 2: PHÂN TÍCH PATTERN
+  → Lỗi xảy ra khi nào? Điều kiện gì?
+  → Có pattern chung không?
+  → Liên quan đến module nào?
+
+Phase 3: GIẢ THUYẾT & KIỂM TRA
+  → Đề xuất 1-2 giả thuyết
+  → Test từng giả thuyết
+  → Xác nhận root cause
+
+Phase 4: SỬA + VIẾT REGRESSION TEST
+  → Viết test tái hiện bug TRƯỚC (phải FAIL)
+  → Sửa code (test PASS)
+  → Verify: revert fix → test FAIL lại → restore fix → test PASS
+```
+
+> 💡 "Random fixes waste time and create new bugs." — KHÔNG bao giờ đoán mò fix.
+
+---
+
+## 🧠 CHỐNG RATIONALIZATION (TDD)
+
+Khi AI muốn skip TDD, bảng này giúp nhận diện rationalization:
+
+| Lý Do Bào Chữa | Sự Thật |
+|---|---|
+| "Quá đơn giản để test" | Code đơn giản vẫn hỏng. Test mất 30 giây |
+| "Viết test sau cũng được" | Test pass ngay = chứng minh không có gì |
+| "Đã test thủ công rồi" | Ad-hoc ≠ systematic. Không re-run được |
+| "Xóa code phí X giờ" | Sunk cost fallacy. Code không test = nợ kỹ thuật |
+| "Giữ code cũ làm reference" | Bạn sẽ "adapt" thay vì viết mới = test-after |
+| "Cần explore trước" | OK. Nhưng sau đó XÓA explore, bắt đầu TDD |
+| "TDD chậm hơn" | TDD NHANH hơn debugging. Pragmatic = test-first |
+| "Code trước test → nhanh hơn" | Viết code trước test? **XÓA code. Bắt đầu lại.** |
+
+---
+
 ## 🏗️ Coding Conventions
 
 ### TypeScript

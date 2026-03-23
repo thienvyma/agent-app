@@ -38,3 +38,6 @@ prisma/migrations/
 
 # Test
 coverage/
+
+# Superpowers framework (cloned repo)
+.superpowers/
