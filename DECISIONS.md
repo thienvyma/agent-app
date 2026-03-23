@@ -213,3 +213,30 @@ ae cost report
 - Anthropic engineers khuyến nghị "Single Source of Truth" — docs trong project
 
 **Workflow**: Xem chi tiết tại RULES.md → "Document Maintenance Rules"
+
+---
+
+## D14: CLI Framework — Commander.js thay vì CLI-Anything
+
+**Quyết định**: Dùng Commander.js (TypeScript) cho `ae` CLI. Không dùng CLI-Anything (Python).
+
+**Đã evaluate CLI-Anything** (https://github.com/HKUDS/CLI-Anything, 13k+ stars):
+- CLI-Anything thiết kế để **wrap phần mềm có sẵn** (GIMP, Blender, LibreOffice) thành CLI cho AI
+- 7-phase automated pipeline: Analyze → Design → Implement → Plan Tests → Write Tests → Document → Publish
+- Output: Python Click CLI, JSON output, REPL mode
+
+**Lý do không dùng**:
+1. **Mục đích khác nhau**: CLI-Anything analyze source code rồi generate wrapper CLI. `ae` CLI chứa custom business logic (check ports, manage agents, assign tasks) — không "wrap" tool nào.
+2. **Ngôn ngữ**: CLI-Anything output Python Click → dự án toàn TypeScript → thêm dependency + context switch
+3. **OpenClaw đã có CLI**: Nếu cần wrap OpenClaw → nó đã có CLI riêng (`openclaw`)
+4. **Commander.js**: Cùng ngôn ngữ TypeScript, ecosystem npm, đã cài sẵn
+
+**Alternatives đã cân nhắc**:
+| Option | Ưu | Nhược | Quyết định |
+|---|---|---|---|
+| CLI-Anything (Python) | 7-phase pipeline, AI-native | Python dep, wrap-focused | ❌ Reject |
+| Commander.js (TypeScript) | Cùng ngôn ngữ, lightweight | Tự viết logic | ✅ **Chọn** |
+| Hybrid (CLI-Anything generate → customize TS) | Best of both | Quá phức tạp cho MVP | ❌ Reject |
+
+**Ngày**: 2026-03-24 (Session 2)
+

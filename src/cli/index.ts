@@ -40,7 +40,7 @@ program
     try {
       const data = await getStatusData();
       const format = (options.format as OutputFormat) || "json";
-      console.log(formatOutput(data as unknown as Record<string, unknown>, format));
+      console.log(formatOutput(data, format));
     } catch (error) {
       console.error(
         JSON.stringify({

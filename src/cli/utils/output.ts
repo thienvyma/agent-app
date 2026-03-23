@@ -9,6 +9,14 @@
 export type OutputFormat = "json" | "table";
 
 /**
+ * Any object that can be serialized to JSON or rendered as table.
+ * Uses index signature for compatibility with structured types like StatusData.
+ */
+export interface FormattableData {
+  [key: string]: unknown;
+}
+
+/**
  * Format data as JSON string or ASCII table.
  *
  * @param data - Any serializable data object
@@ -16,7 +24,7 @@ export type OutputFormat = "json" | "table";
  * @returns Formatted string ready for stdout
  */
 export function formatOutput(
-  data: Record<string, unknown>,
+  data: FormattableData,
   format: OutputFormat = "json"
 ): string {
   if (format === "table") {
@@ -31,7 +39,7 @@ export function formatOutput(
  * @param data - Object to render as table
  * @returns ASCII table string
  */
-function formatTable(data: Record<string, unknown>): string {
+function formatTable(data: FormattableData): string {
   const lines: string[] = [];
   const width = 50;
   const sep = "─".repeat(width);
@@ -43,7 +51,7 @@ function formatTable(data: Record<string, unknown>): string {
   for (const [key, value] of Object.entries(data)) {
     if (typeof value === "object" && value !== null) {
       lines.push(`│ ${key.toUpperCase().padEnd(width - 2)} │`);
-      for (const [k, v] of Object.entries(value as Record<string, unknown>)) {
+      for (const [k, v] of Object.entries(value as FormattableData)) {
         const label = `  ${k}:`;
         const val = String(v);
         lines.push(`│ ${label.padEnd(20)}${val.padEnd(width - 22)} │`);

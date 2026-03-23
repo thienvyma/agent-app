@@ -8,9 +8,10 @@
  */
 
 import { createConnection } from "net";
+import { FormattableData } from "../utils/output";
 
 /** Structure returned by `ae status` */
-export interface StatusData {
+export interface StatusData extends FormattableData {
   version: string;
   agents: {
     total: number;
