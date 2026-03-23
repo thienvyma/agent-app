@@ -1,7 +1,7 @@
 # Phase 1: Foundation & Scaffold (Sessions 0–1)
 
 > **Status**: 🟡 In Progress
-> **Sessions**: S0 (Foundation Docs), S1 (Project Scaffold)
+> **Sessions**: S0 (Foundation Docs ✅), S1 (Project Scaffold)
 
 ---
 
@@ -11,13 +11,14 @@ Thiết lập nền tảng dự án — tài liệu định vị + project chạ
 
 ## Session 0: Foundation Documents ✅
 
-**Đã hoàn thành** — 10 files, 2 commits (`47083fa`, `75e44d5`)
+**Đã hoàn thành** — 20 files, 7 commits
 
 Tạo bộ "Single Source of Truth":
-- PRD.md, RULES.md, PROGRESS.md, architecture_state.json
-- ARCHITECTURE.md, DECISIONS.md, SESSIONS.md
-- docs/openclaw-integration.md
-- .gemini/rules.md, .gitignore
+- PRD.md, RULES.md, PROGRESS.md, ARCHITECTURE.md, architecture_state.json
+- DECISIONS.md (13 decisions), SESSIONS.md (15 sessions)
+- docs/openclaw-integration.md, docs/GAP_ANALYSIS.md, docs/MEMORY_RESEARCH.md
+- 8 phase directories (docs/phases/phase-1 → phase-8)
+- .gemini/rules.md (v2), .gitignore
 
 ## Session 1: Project Scaffold (chưa bắt đầu)
 
@@ -26,14 +27,15 @@ Tạo bộ "Single Source of Truth":
 **Việc cần làm**:
 1. `npx create-next-app@latest ./` (Next.js 15, TypeScript, App Router)
 2. Cài dependencies (prisma, bullmq, grammy, socket.io, vitest...)
-3. Docker Compose (PostgreSQL 16 + Redis 7)
+3. Docker Compose (PostgreSQL 16 **+ pgvector extension** + Redis 7)
 4. Prisma init + `.env`
-5. Tạo folder structure (`src/core/`, `src/types/`, `tests/`)
+5. Tạo folder structure (`src/core/`, `src/cli/`, `src/types/`, `tests/`)
 6. Placeholder files cho mọi module
+7. **CLI-Anything setup** (nếu available)
 
 **Output mong đợi**:
 - `npm run dev` → trang Next.js mặc định
-- `docker compose up` → DB + Redis chạy
+- `docker compose up` → DB (pgvector) + Redis chạy
 - Folder structure sẵn sàng cho Session 2
 
 **Dependencies cần cài**:

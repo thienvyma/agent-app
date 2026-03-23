@@ -20,7 +20,7 @@ Web dashboard đẹp, functional + full flow end-to-end test.
 ## Session 13: Integration Test
 
 **Full flow E2E**: Create company → agents → deploy → delegate → execute → approve → verify
-(see phase-6-ui-integration old README for full test scenario)
+(see SESSIONS.md → Session 13 for full test scenario)
 
 ---
 

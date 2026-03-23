@@ -12,7 +12,7 @@
 
 | Session | Status | Module | Commits |
 |---|---|---|---|
-| S0 - Foundation | ✅ Completed | Foundation docs | 6 commits |
+| S0 - Foundation | ✅ Completed | Foundation docs | 7 commits |
 | S1 - Scaffold | ⬜ Not Started | Next.js + Docker | — |
 
 ---
@@ -21,13 +21,14 @@
 
 ### Đã làm:
 1. Tạo project folder `agentic-enterprise/`
-2. Git init + 6 commits:
+2. Git init + 7 commits:
    - `47083fa`: PRD, RULES, PROGRESS, ARCHITECTURE, architecture_state.json, .gemini/rules.md
    - `75e44d5`: DECISIONS, SESSIONS, docs/openclaw-integration.md
    - `f1d06bf`: docs/phases/ — 7 phase directories
    - `bf0fd78`: Restructure 7→8 phases, add Memory phase, fill gaps
    - `b1a8fe3`: MEMORY_RESEARCH.md
-   - (pending): Final foundation update — all decisions incorporated
+   - `538044c`: Finalize all docs with 4 decisions (local-first, CLI, 3-tier memory, doc workflow)
+   - `fcd0bc1`: Rewrite SESSIONS.md — 15 sessions, 8 phases, CLI per session
 
 ### Foundation Documents (hiện tại):
 ```

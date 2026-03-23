@@ -171,3 +171,13 @@ Phase 8+: Tích hợp Mem0 hoặc Cognee nếu cần nâng cao
 | Episodic | pgvector | `ConversationLogger` | Nhớ tương tác cũ |
 | Semantic | pgvector | `KnowledgeBase` | Tài liệu, facts |
 | Procedural | pgvector + DB | `CorrectionLog` | Rules từ corrections |
+
+---
+
+> [!NOTE]
+> **Quyết định cuối cùng (D12)**: Áp dụng **3-tier** thay vì 4-tier ở trên.
+> - **Tier 1: OpenClaw native** (MEMORY.md + Mem0 plugin) — per-agent, tự quản lý
+> - **Tier 2: pgvector** — company-wide (Episodic + Semantic + Procedural gộp)
+> - **Tier 3: Redis** — session STM
+> 
+> Lý do: OpenClaw đã có memory system tốt cho per-agent → không cần rebuild. Xem DECISIONS.md → D12.

@@ -91,9 +91,9 @@ description: Hướng dẫn agent lên kế hoạch marketing
 
 ```
 Cơ chế mặc định:
-  MEMORY.md          — Long-term knowledge (agent ghi nhớ)
-  daily-logs/        — Session-level context per day
-  SQLite vector      — Semantic search across memories
+  MEMORY.md              — Long-term curated facts (inject vào context đầu session)
+  memory/YYYY-MM-DD.md   — Daily logs, append-only (load 2 ngày gần nhất)
+  Hybrid search          — BM25 keyword + vector similarity
 
 Plugins nâng cao:
   Supermemory        — Auto-recall across channels

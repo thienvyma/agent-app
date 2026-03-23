@@ -166,18 +166,18 @@ Tạo agent mới → agent cần "training period":
 
 ## Tóm Tắt Gaps
 
-| # | Gap | Severity | Cần thêm phase? |
+| # | Gap | Severity | Giải pháp |
 |---|---|---|---|
-| 1 | Tool Permission System | 🔴 Cao | Bổ sung vào Phase 3 |
-| 2 | Intelligent Message Routing | 🟡 Trung bình | Bổ sung vào Phase 5 |
-| 3 | Zalo Channel | 🟡 Thấp (MVP) | Phase 8+ |
-| **4** | **Memory System (Vector DB)** | **🔴🔴 Rất cao** | **Cần Phase mới!** |
-| 5 | External Trigger System | 🔴 Cao | Bổ sung vào Phase 4 |
-| 6 | Task Decomposer Module | 🟡 Trung bình | Bổ sung vào Phase 3 |
-| 7 | Cost Management | 🟡 Trung bình | Bổ sung vào Phase 5 |
-| 8 | Audit Trail | 🟡 Trung bình | Bổ sung vào Phase 3 |
-| 9 | Error Recovery | 🟡 Trung bình | Bổ sung vào Phase 3 |
-| 10 | Agent Onboarding Flow | 🟡 Thấp (MVP) | Phase 8+ |
+| 1 | Tool Permission System | 🔴 Cao | ✅ Đã bổ sung vào Phase 3 S5 |
+| 2 | Intelligent Message Routing | 🟡 Trung bình | ✅ Đã bổ sung vào Phase 5 S8 |
+| 3 | Zalo Channel | 🟡 Thấp (MVP) | ⏳ Defer Phase 9+ |
+| **4** | **Memory System (Vector DB)** | **🔴🔴 Rất cao** | **✅ Tạo Phase 4 mới (S6-S7)** |
+| 5 | External Trigger System | 🔴 Cao | ✅ Đã bổ sung vào Phase 5 S8 |
+| 6 | Task Decomposer Module | 🟡 Trung bình | ✅ Đã bổ sung vào Phase 3 S5 |
+| 7 | Cost Management | 🟡 Trung bình | ✅ Đã bổ sung vào Phase 6 S10 |
+| 8 | Audit Trail | 🟡 Trung bình | ✅ Đã bổ sung vào Phase 3 S5 |
+| 9 | Error Recovery | 🟡 Trung bình | ✅ Đã bổ sung vào Phase 3 S5 |
+| 10 | Agent Onboarding Flow | 🟡 Thấp (MVP) | ⏳ Defer Phase 9+ |
 
 ---
 
