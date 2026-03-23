@@ -1,43 +1,54 @@
-# 📏 RULES.md — Luật Chơi Cho AI (v5)
+# 📏 RULES.md — Luật Chơi Cho AI (v6)
 
 > ⚠️ **BẮT BUỘC**: Mọi AI assistant làm việc trên dự án này PHẢI đọc file này ĐẦU TIÊN.
 > File này là LUẬT — không phải gợi ý. Vi phạm = revert.
+> Tham khảo: Anthropic best practices + obra/superpowers methodology.
 
 ---
 
-## 🔴 WORKFLOW BẮT BUỘC MỖI SESSION
+## 🔴 WORKFLOW BẮT BUỘC MỖI SESSION (5 bước)
 
-### Bước 1: MỞ SESSION — Đọc 5 file (KHÔNG ĐƯỢC BỎ QUA)
+### Bước 1: ĐỌC — 5 file bắt buộc
 
 ```
-1. PROGRESS.md           → Biết session trước làm gì, lỗi tồn đọng, bước tiếp
-2. architecture_state.json → Biết module nào xong/chưa, known_issues
+1. PROGRESS.md           → Session trước làm gì, lỗi tồn đọng, bước tiếp
+2. architecture_state.json → Module nào xong/chưa, known_issues
 3. RULES.md (file này)    → Nhớ luật chơi
-4. SESSIONS.md            → Xem session hiện tại cần làm gì, bao nhiêu files
-5. docs/phases/phase-XX/README.md → Chi tiết + ghi chú thảo luận của phase
+4. SESSIONS.md            → Session hiện tại: mấy files, tests gì, CLI gì
+5. docs/phases/phase-XX/README.md → Chi tiết + ghi chú thảo luận
 ```
 
 > Nếu bạn KHÔNG đọc 5 file trên → bạn CHẮC CHẮN sẽ viết code sai, trùng, hoặc thiếu.
 
-### Bước 2: XÁC NHẬN — Liệt kê trước khi code
+### Bước 2: LẬP KẾ HOẠCH + XIN DUYỆT (Human-in-the-Loop)
 
-Trước khi viết dòng code đầu tiên, PHẢI liệt kê:
-- Session số mấy? Phase nào?
-- Cần tạo mấy file? Tên file gì?
-- Tests nào cần viết?
-- CLI commands nào cần thêm?
-- Có phụ thuộc module nào chưa xong không?
+Trước khi viết dòng code đầu tiên, PHẢI:
+1. Liệt kê: Session số mấy? Phase nào?
+2. Liệt kê: Cần tạo mấy file? Tên file gì? (tối đa 6)
+3. Liệt kê: Tests nào cần viết?
+4. Liệt kê: CLI commands nào cần thêm?
+5. Kiểm tra: Có phụ thuộc module nào chưa xong không?
+6. **TRÌNH BÀY kế hoạch cho owner → CHỜ XÁC NHẬN trước khi code**
 
-### Bước 3: CODE — Tuân thủ luật bên dưới
+> 💡 Theo Anthropic: "Explore → Plan → Code". KHÔNG BAO GIỜ nhảy thẳng vào code.
 
-### Bước 4: KẾT THÚC SESSION — Cập nhật 3 file (KHÔNG ĐƯỢC BỎ QUA)
+### Bước 3: CODE — Theo TDD (Red → Green → Refactor)
+
+Quy trình mỗi file:
+1. Viết test TRƯỚC (test phải FAIL — Red)
+2. Viết code tối thiểu cho test PASS (Green)
+3. Refactor code + giữ test pass
+4. **Commit ngay sau mỗi file hoàn thành** (không chờ cuối session)
+
+> 💡 Theo obra/superpowers: "Deletes code written before tests". Test-first là bắt buộc.
+
+### Bước 4: KẾT THÚC SESSION — Cập nhật 3 file
 
 ```
 1. CẬP NHẬT PROGRESS.md:
-   - Ghi session vừa làm (files tạo, tests pass/fail)
-   - Ghi lỗi tồn đọng (nếu có)
-   - Ghi bước tiếp theo rõ ràng
-   - Ghi files đã thay đổi
+   - Session vừa làm (files tạo, tests pass/fail)
+   - Lỗi tồn đọng (nếu có) — mô tả rõ: file nào, dòng nào, hiện tượng gì
+   - Bước tiếp theo rõ ràng (session nào, làm gì)
 
 2. CẬP NHẬT architecture_state.json:
    - Module status: "completed" / "in_progress"
@@ -50,71 +61,120 @@ Trước khi viết dòng code đầu tiên, PHẢI liệt kê:
 ### Bước 5: THAY ĐỔI KIẾN TRÚC — Nếu có
 
 ```
-- CẬP NHẬT ARCHITECTURE.md
-- CẬP NHẬT DECISIONS.md — ghi quyết định mới + LÝ DO
-- CẬP NHẬT docs/phases/phase-XX/README.md — phase bị ảnh hưởng
+- CẬP NHẬT ARCHITECTURE.md + DECISIONS.md + phase README bị ảnh hưởng
 ```
 
 ---
 
-## 🚫 TUYỆT ĐỐI KHÔNG
+## 🚫 TUYỆT ĐỐI KHÔNG (10 điều cấm)
 
-1. **KHÔNG sửa OpenClaw source code** — OpenClaw là external dependency, cài qua npm
-2. **KHÔNG import OpenClaw internal modules** — chỉ giao tiếp qua `IAgentEngine` interface
-3. **KHÔNG viết feature ngoài session** — chỉ code module đang focus
-4. **KHÔNG sửa file module khác** "tiện tay" — mỗi session = 1 module duy nhất
-5. **KHÔNG để code uncommitted** qua session — commit TRƯỚC khi kết thúc
-6. **KHÔNG dùng `any` type** — TypeScript strict mode luôn
-7. **KHÔNG hardcode credentials** — dùng environment variables
-8. **KHÔNG skip cập nhật docs** — vi phạm rule quan trọng nhất
-9. **KHÔNG tạo file trống** "để sau" — mỗi file phải có ít nhất interface/type
-10. **KHÔNG xóa hoặc sửa tests đang pass** để "fix" code — sửa code cho pass test
+1. **KHÔNG sửa OpenClaw source** — chỉ giao tiếp qua `IAgentEngine` interface
+2. **KHÔNG viết feature ngoài session** — chỉ code module đang focus
+3. **KHÔNG sửa file module khác** "tiện tay" — mỗi session = 1 module
+4. **KHÔNG để code uncommitted** qua session — commit TRƯỚC khi kết thúc
+5. **KHÔNG dùng `any` type** — TypeScript strict mode luôn
+6. **KHÔNG hardcode credentials** — dùng environment variables
+7. **KHÔNG skip cập nhật docs** — vi phạm rule quan trọng nhất
+8. **KHÔNG tạo file trống** "để sau" — mỗi file phải có ít nhất interface/type
+9. **KHÔNG xóa/sửa tests đang pass** để "fix" code — sửa CODE cho pass TEST
+10. **KHÔNG viết code TRƯỚC test** — TDD bắt buộc (Red → Green → Refactor)
 
-## ✅ BẮT BUỘC
+## ✅ BẮT BUỘC (10 điều phải làm)
 
-1. **Interface trước, implementation sau** — define contract rồi mới code
-2. **Test trước, feature sau** — viết test → code cho đến pass
+1. **Test trước, code sau** — viết test → chạy fail → viết code → pass → commit
+2. **Interface trước, implementation sau** — define contract rồi mới code
 3. **Mỗi file < 300 dòng** — tách ra nếu quá dài
 4. **Mọi function phải có error handling + logging** — không silent fail
-5. **Giao tiếp OpenClaw CHỈ qua HTTP API** (port 18789) qua `IAgentEngine`
-6. **Commit theo conventional format**: `<type>(<scope>): <description>`
-7. **CLI command cho mọi feature** — mỗi feature mới → thêm CLI command vào `ae`
-8. **Mỗi session tối đa 6 files mới** — nếu nhiều hơn → DỪNG LẠI và hỏi owner
+5. **Mọi function phải có JSDoc** — mô tả purpose, params, return
+6. **Commit sau mỗi file hoàn thành** — KHÔNG tích commit cuối session
+7. **CLI command cho mọi feature** — thêm vào `ae` CLI framework (Phase 2)
+8. **Mỗi session tối đa 6 files mới** — vượt → DỪNG LẠI và hỏi owner
+9. **Trình kế hoạch trước khi code** — owner phải xác nhận (Bước 2)
+10. **Verify trước khi kết thúc** — chạy tests, kiểm tra CLI, evidence > claims
 
-## 🔄 QUY TẮC CHỐNG MẤT CONTEXT
+---
 
-### Giữa các sessions:
-- `PROGRESS.md` = **bộ nhớ chính** — AI session mới đọc file này ĐẦU TIÊN
-- `architecture_state.json` = **bản đồ** — module nào xong, module nào chưa
-- `SESSIONS.md` = **kế hoạch** — session tiếp theo làm gì
-- `docs/phases/phase-XX/README.md` = **ghi chú thảo luận** — chi tiết + context của phase
+## 🧠 QUY TẮC CHỐNG MẤT CONTEXT (Anthropic best practices)
+
+### File = Bộ nhớ (giữa các sessions):
+| File | Vai trò | Khi nào đọc |
+|---|---|---|
+| `PROGRESS.md` | Bộ nhớ chính | ĐẦU TIÊN mỗi session |
+| `architecture_state.json` | Bản đồ module | Đầu session |
+| `SESSIONS.md` | Kế hoạch chi tiết | Đầu session |
+| `docs/phases/phase-XX/README.md` | Context + ghi chú | Đầu session |
+| `DECISIONS.md` | Tại sao quyết định X | Khi cần context thiết kế |
+| `ARCHITECTURE.md` | Kiến trúc tổng quan | Khi thay đổi kiến trúc |
+
+### Context management (giữ context window sạch):
+- CHỈ ĐỌC files cần thiết cho session hiện tại
+- KHÔNG đọc toàn bộ codebase — load progressive (cần gì đọc nấy)
+- Đọc theo thứ tự: PROGRESS → architecture_state → SESSIONS → phase README → source
 
 ### Khi phát hiện bug:
-1. GHI VÀO `PROGRESS.md` mục "Lỗi tồn đọng" — mô tả rõ: file nào, dòng nào, hiện tượng gì
+1. GHI VÀO `PROGRESS.md` → "Lỗi tồn đọng" (file, dòng, hiện tượng, session ảnh hưởng)
 2. GHI VÀO `architecture_state.json` → `known_issues[]`
-3. Nếu bug ảnh hưởng session khác → ghi rõ session nào bị ảnh hưởng
 
 ### Khi có quyết định thiết kế mới:
-1. GHI VÀO `DECISIONS.md` — quyết định + lý do + alternatives considered
-2. GHI VÀO phase README mục "Ghi Chú Thảo Luận"
+1. GHI VÀO `DECISIONS.md` — quyết định + lý do + alternatives đã cân nhắc
+2. GHI VÀO phase README → "Ghi Chú Thảo Luận"
 
-### Khi hoàn thành session thành công:
-1. Ghi "✅ Completed" vào PROGRESS.md cho session đó
-2. Ghi rõ tests nào đã pass
-3. Ghi rõ CLI commands nào đã thêm
-4. Ghi bước tiếp theo là session nào, làm gì
+---
+
+## 🔄 QUY TẮC FAIL-FAST (Anthropic: "khi sai 2/3 lần → bắt đầu lại")
+
+1. Nếu fix lỗi **2 lần mà vẫn sai** → DỪNG LẠI
+2. Báo owner mô tả vấn đề
+3. Bắt đầu lại với approach khác (KHÔNG tiếp tục đào sâu)
+4. `git stash` hoặc `git checkout -- .` để quay lại clean state
+
+## 🗣️ QUYỀN NÓI "KHÔNG CHẮC" (Anthropic: "giảm hallucination")
+
+- AI ĐƯỢC PHÉP và KHUYẾN KHÍCH nói: "Tôi không chắc chắn về X"
+- KHÔNG bao giờ đoán mò khi không biết → hỏi owner
+- Ghi câu hỏi vào phase README "Ghi Chú Thảo Luận"
+- Ưu tiên: hỏi trước, làm đúng 1 lần > đoán mò sai 3 lần
+
+---
+
+## 🦸 SUPERPOWERS WORKFLOW (obra/superpowers methodology)
+
+Dự án áp dụng quy trình phát triển dựa trên obra/superpowers:
+
+```
+1. Brainstorming  → Làm rõ yêu cầu, hỏi owner, khám phá alternatives
+2. Planning       → Lập kế hoạch chi tiết (file paths, code, tests)
+3. TDD Execution  → Red → Green → Refactor → Commit (per file)
+4. Code Review    → Self-review: đúng spec? code quality OK?
+5. Verification   → Chạy tests, kiểm tra CLI, evidence > claims
+6. Documentation  → Cập nhật PROGRESS + architecture_state
+```
+
+### Superpowers Philosophy:
+- **Test-Driven Development** — Viết test trước, LUÔN LUÔN
+- **Systematic over ad-hoc** — Quy trình > đoán mò
+- **Complexity reduction** — Đơn giản là mục tiêu chính (YAGNI)
+- **Evidence over claims** — Verify trước khi tuyên bố xong
+
+### Setup (Session 1):
+```
+Cài obra/superpowers vào project nếu dùng Claude Code:
+/install-plugin obra/superpowers
+
+Hoặc thủ công — áp dụng workflow ở trên.
+```
 
 ---
 
 ## 🏗️ Coding Conventions
 
 ### TypeScript
-- Strict mode: `"strict": true` trong tsconfig.json
+- Strict mode: `"strict": true`
 - Prefer `interface` over `type` cho object shapes
 - Prefer `const` over `let`
 - Async/await over raw Promises
 - Named exports over default exports
-- Mọi function phải có JSDoc comment mô tả purpose
+- JSDoc trên mọi function
 
 ### File & Folder Naming
 - Files: `kebab-case.ts` (e.g. `agent-orchestrator.ts`)
@@ -122,7 +182,7 @@ Trước khi viết dòng code đầu tiên, PHẢI liệt kê:
 - Types: `PascalCase` (e.g. `AgentConfig`)
 - Constants: `UPPER_SNAKE_CASE`
 - Functions/methods: `camelCase`
-- Test files: `*.test.ts` cùng pattern với source
+- Test files: `*.test.ts` mirror source structure
 
 ### Project Structure
 ```
@@ -162,38 +222,53 @@ Scopes: foundation, scaffold, cli, adapter, company, orchestrator,
 
 ## 🔌 OpenClaw Integration Rules
 
-- OpenClaw chạy như **separate process** (Gateway trên port 18789)
+- OpenClaw = **separate process** (Gateway port 18789)
 - App giao tiếp qua **HTTP REST API** only
 - Adapter pattern: `IAgentEngine` → `OpenClawAdapter`
-- Nếu OpenClaw thay đổi API → chỉ sửa `OpenClawAdapter`, KHÔNG sửa business logic
-- Config OpenClaw qua **file config riêng**, KHÔNG mix vào app config
-- **Memory Tier 1**: Tận dụng OpenClaw built-in (MEMORY.md + daily logs + Mem0 plugin)
-- **Memory Tier 2**: pgvector cho company KB, cross-agent search (app tự build)
-- **Memory Tier 3**: Redis cho session STM (app tự build)
+- API thay đổi → chỉ sửa `OpenClawAdapter`, KHÔNG sửa business logic
+- Config OpenClaw qua **file config riêng**
+
+### Memory 3-Tier:
+- **Tier 1 (OpenClaw)**: MEMORY.md + daily logs + Mem0 plugin (per-agent)
+- **Tier 2 (pgvector)**: Company KB, cross-agent search, conversation logs
+- **Tier 3 (Redis)**: Session STM, volatile state
 
 ## 🖥️ Deployment Rules
 
-- **Local-first**: App chạy trên localhost (Next.js dev server)
-- **$0 cost**: Ollama local + OpenClaw local + PostgreSQL Docker + Redis Docker
-- Tất cả services chạy qua `docker-compose.yml`
-- Environment variables qua `.env` file
-- Khi muốn deploy cloud → chỉ đổi `.env` + deploy
+- **Local-first**: App chạy trên localhost
+- **$0 cost**: Ollama + OpenClaw + PostgreSQL Docker + Redis Docker
+- `docker-compose.yml` cho tất cả services
+- `.env` cho environment variables
+- Cloud-ready: chỉ đổi `.env` + deploy
 
-## 📋 Checklist Nhanh (Copy vào đầu mỗi session)
+---
+
+## 📋 CHECKLIST NHANH (Copy vào đầu mỗi session)
 
 ```
+=== TRƯỚC KHI CODE ===
 □ Đã đọc PROGRESS.md
-□ Đã đọc architecture_state.json
+□ Đã đọc architecture_state.json (kiểm tra known_issues)
 □ Đã đọc RULES.md
-□ Đã đọc SESSIONS.md → session N
+□ Đã đọc SESSIONS.md → Session N
 □ Đã đọc docs/phases/phase-XX/README.md
 □ Đã liệt kê files cần tạo (≤6)
 □ Đã liệt kê tests cần viết
 □ Đã liệt kê CLI commands cần thêm
---- SAU KHI CODE ---
-□ Tests pass
+□ Đã trình kế hoạch cho owner → được xác nhận
+□ Không có dependency chưa xong blocking session này
+
+=== TRONG KHI CODE (per file) ===
+□ Viết test trước (phải FAIL)
+□ Viết code tối thiểu (test PASS)
+□ Refactor
+□ Commit file
+
+=== SAU KHI CODE ===
+□ Tất cả tests pass
 □ CLI commands hoạt động
+□ Self-review: đúng spec? quality OK?
 □ Đã cập nhật PROGRESS.md
 □ Đã cập nhật architecture_state.json
-□ Đã commit: docs: update progress session N
+□ Commit cuối: docs: update progress session N
 ```
