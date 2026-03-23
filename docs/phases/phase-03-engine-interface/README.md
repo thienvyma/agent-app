@@ -1,3 +1,13 @@
-# phase-03-engine-interface
+ï»¿# Phase 3: Engine Interface (S3)
 
-> TODO: Chi ti?t s? du?c b? sung tru?c khi b?t d?u phase này.
+## Muc tieu
+Dinh nghia IAgentEngine interface - ranh gioi giua wrapper va core engine.
+Tao MockAdapter cho testing. KHONG cham OpenClaw.
+
+## Session 3
+- Files: src/types/agent.ts, src/core/adapter/i-agent-engine.ts, src/core/adapter/mock-adapter.ts, tests/
+- Interface: deploy(), undeploy(), sendMessage(), getStatus(), listAgents()
+- Types: AgentConfig, AgentStatus, AgentResponse
+- Test: MockAdapter implements day du, all tests pass
+
+## Lien quan PRD: D1 Engine interface pattern
