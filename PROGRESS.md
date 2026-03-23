@@ -61,7 +61,7 @@ docs/
 - D11: CLI-Anything + custom `ae` commands (song song mọi phase)
 - D12: 3-tier memory (OpenClaw + pgvector + Redis)
 - D13: Document maintenance workflow bắt buộc
-- D8 (updated): Restructure 8→19 phases / 15→20 sessions — mỗi session ≤ 6 files
+- D8 (updated): Restructure → 20 phases / 21 sessions (Phase 2 = CLI Environment)
 
 ### Lỗi Tồn Đọng: Không có
 

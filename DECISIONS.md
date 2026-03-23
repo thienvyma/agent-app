@@ -117,19 +117,18 @@ CEO phân tích:
 
 ---
 
-## D8: Phân Pha — 19 Phases, 20 Sessions
+## D8: Phân Pha — 20 Phases, 21 Sessions
 
-**Quyết định**: Chia thành 19 phases, 20 sessions, CLI xây song song. Mỗi session ≤ 6 files.
+**Quyết định**: Chia thành 20 phases, 21 sessions. Mỗi session ≤ 6 files. CLI dựng nền Phase 2, bổ sung commands mỗi phase sau.
 
 **8 giai đoạn**:
 ```
-A. Nền Tảng  (P1)     → B. Engine (P2-3)     → C. Nhân Sự (P4-7)
-→ D. Trí Nhớ (P8-9)   → E. Giao Tiếp (P10-12) → F. Kết Nối (P13-15)
-→ G. Dashboard (P16-17) → H. Hoàn Thiện (P18-19)
-+ CLI: Song song mọi phase
+A. Nền Tảng  (P1-2, CLI foundation)  → B. Engine (P3-4)  → C. Nhân Sự (P5-8)
+→ D. Trí Nhớ (P9-10) → E. Giao Tiếp (P11-13) → F. Kết Nối (P14-16)
+→ G. Dashboard (P17-18) → H. Hoàn Thiện (P19-20)
 ```
 
-**Lịch sử**: Ban đầu 8 phases / 15 sessions → phát hiện 3 session quá tải (S5=9 files, S10=12+ files, S12=10+ files) → restructure lên 19 phases / 20 sessions — mỗi session ≤ 6 files, an toàn cho vibe coding.
+**Lịch sử**: 8 phases → 19 phases (session overload fix) → 20 phases (thêm Phase 2: CLI Environment).
 
 ---
 

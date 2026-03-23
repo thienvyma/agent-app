@@ -146,35 +146,35 @@ Local Processes:
   └── Ollama                      (port 11434)
 ```
 
-## 19 Phases (20 Sessions) + CLI
+## 20 Phases (21 Sessions) + CLI
 
 ```
 A. Nền Tảng
   Phase 1:  Foundation & Scaffold      (S0-S1)   ← S0 ✅
+  Phase 2:  CLI Environment            (S2)      ⭐ CLI-Anything + ae framework
 B. Engine
-  Phase 2:  Engine Interface            (S2)
-  Phase 3:  OpenClaw Adapter            (S3)
+  Phase 3:  Engine Interface            (S3)
+  Phase 4:  OpenClaw Adapter            (S4)
 C. Nhân Sự
-  Phase 4:  Company Database            (S4)
-  Phase 5:  Agent Lifecycle             (S5)
-  Phase 6:  Tools & Security            (S6)
-  Phase 7:  Task Engine                 (S7)
+  Phase 5:  Company Database            (S5)
+  Phase 6:  Agent Lifecycle             (S6)
+  Phase 7:  Tools & Security            (S7)
+  Phase 8:  Task Engine                 (S8)
 D. Trí Nhớ
-  Phase 8:  Vector Memory               (S8)      ⭐ 3-tier
-  Phase 9:  Knowledge System            (S9)
+  Phase 9:  Vector Memory               (S9)      ⭐ 3-tier
+  Phase 10: Knowledge System            (S10)
 E. Giao Tiếp
-  Phase 10: Agent Messaging             (S10)
-  Phase 11: External Triggers           (S11)
-  Phase 12: Approval Workflow           (S12)
+  Phase 11: Agent Messaging             (S11)
+  Phase 12: External Triggers           (S12)
+  Phase 13: Approval Workflow           (S13)
 F. Kết Nối
-  Phase 13: REST API                    (S13)
-  Phase 14: Cost & Realtime             (S14)
-  Phase 15: Telegram Bot                (S15)
+  Phase 14: REST API                    (S14)
+  Phase 15: Cost & Realtime             (S15)
+  Phase 16: Telegram Bot                (S16)
 G. Dashboard
-  Phase 16: UI Components              (S16)
-  Phase 17: Dashboard Pages            (S17)
+  Phase 17: UI Components              (S17)
+  Phase 18: Dashboard Pages            (S18)
 H. Hoàn Thiện
-  Phase 18: End-to-End Testing         (S18)
-  Phase 19: Self-Learning              (S19)
-+ CLI: Song song mọi phase (CLI-Anything + ae commands)
+  Phase 19: End-to-End Testing         (S19)
+  Phase 20: Self-Learning              (S20)
 ```

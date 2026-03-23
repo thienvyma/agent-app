@@ -61,11 +61,12 @@
 - Approval buttons
 - Send commands to specific agents
 
-### F9: CLI (song song với mọi phase)
-- CLI-Anything để tạo CLI wrapper
+### F9: CLI (Phase 2 dựng nền, mỗi phase bổ sung)
+- **Phase 2**: CLI-Anything tạo khung `ae` CLI framework
 - Custom `ae` commands cho mọi operation
 - JSON output cho agent consumption
 - Agent nội bộ tự gọi CLI để self-manage
+- Mỗi phase sau bổ sung commands vào khung đã có
 
 ### F10: Feedback Loop & Self-Learning
 - CorrectionLog: owner reject → extract rule → embed vào VectorStore

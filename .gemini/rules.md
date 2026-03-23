@@ -1,7 +1,7 @@
-Agentic Enterprise SaaS — AI Rules Summary (v3)
+Agentic Enterprise SaaS — AI Rules Summary (v4)
 
 LOCAL-FIRST APP: Next.js on localhost, $0 cost, Ollama + OpenClaw local.
-19 PHASES, 20 SESSIONS. Each session <= 6 files for safe vibe coding.
+20 PHASES, 21 SESSIONS. Each session <= 6 files. Phase 2 = CLI-Anything foundation.
 NEVER modify OpenClaw source. Communicate ONLY via IAgentEngine interface → HTTP API (port 18789).
 TypeScript strict mode. Every file < 300 lines.
 Test BEFORE feature. Interface BEFORE implementation.
