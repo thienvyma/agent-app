@@ -1,0 +1,102 @@
+{
+  "project": "agentic-enterprise",
+  "version": "0.0.0",
+  "phase": 0,
+  "current_session": 0,
+  "total_sessions": 0,
+  "last_session_date": "2026-03-23",
+  "modules": {
+    "foundation": {
+      "status": "completed",
+      "session": 0,
+      "files": [
+        "PRD.md",
+        "RULES.md",
+        "PROGRESS.md",
+        "architecture_state.json",
+        "ARCHITECTURE.md",
+        ".gemini/rules.md"
+      ]
+    },
+    "scaffold": {
+      "status": "not_started",
+      "session": 1,
+      "files": []
+    },
+    "adapter-interface": {
+      "status": "not_started",
+      "session": 2,
+      "files": []
+    },
+    "adapter-openclaw": {
+      "status": "not_started",
+      "session": 3,
+      "files": []
+    },
+    "company": {
+      "status": "not_started",
+      "session": 4,
+      "files": []
+    },
+    "orchestrator": {
+      "status": "not_started",
+      "session": 5,
+      "files": []
+    },
+    "messaging": {
+      "status": "not_started",
+      "session": 6,
+      "files": []
+    },
+    "approval": {
+      "status": "not_started",
+      "session": 7,
+      "files": []
+    },
+    "dashboard-api": {
+      "status": "not_started",
+      "session": 8,
+      "files": []
+    },
+    "telegram-bot": {
+      "status": "not_started",
+      "session": 9,
+      "files": []
+    },
+    "dashboard-ui": {
+      "status": "not_started",
+      "session": 10,
+      "files": []
+    },
+    "integration-test": {
+      "status": "not_started",
+      "session": 11,
+      "files": []
+    },
+    "feedback-loop": {
+      "status": "not_started",
+      "session": 12,
+      "files": []
+    }
+  },
+  "active_agents_config": [],
+  "known_issues": [],
+  "tech_stack": {
+    "runtime": "Node.js 22+",
+    "framework": "Next.js 15",
+    "language": "TypeScript 5+ strict",
+    "database": "PostgreSQL + Prisma",
+    "queue": "BullMQ (Redis)",
+    "agent_engine": "OpenClaw (npm, HTTP API port 18789)",
+    "realtime": "Socket.IO",
+    "telegram": "grammY",
+    "auth": "NextAuth.js",
+    "deploy": "Docker Compose"
+  },
+  "openclaw": {
+    "integration": "HTTP API via Gateway",
+    "port": 18789,
+    "adapter_interface": "IAgentEngine",
+    "update_command": "npm update -g openclaw"
+  }
+}
