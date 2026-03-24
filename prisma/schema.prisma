@@ -1,15 +1,206 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+// Prisma Schema — Agentic Enterprise
+// 9 tables, 4 enums, full relationships
+// Phase 5 (Session 5) — Foundation for 21 subsequent sessions
 
 generator client {
-  provider = "prisma-client"
-  output   = "../src/generated/prisma"
+  provider = "prisma-client-js"
 }
 
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+}
+
+// ================ ENUMS ================
+
+enum AgentStatus {
+  IDLE
+  RUNNING
+  ERROR
+  DEPLOYING
+  PAUSED_BUDGET
+}
+
+enum TaskStatus {
+  PENDING
+  IN_PROGRESS
+  WAITING_APPROVAL
+  APPROVED
+  REJECTED
+  COMPLETED
+  FAILED
+}
+
+enum MessageType {
+  DELEGATE
+  REPORT
+  CHAIN
+  GROUP
+  ALERT
+  ESCALATION
+}
+
+enum ApprovalStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  MODIFIED
+}
+
+// ================ TABLES ================
+
+/// Company — top-level organization entity
+model Company {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  config      Json     @default("{}")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  departments Department[]
+
+  @@map("companies")
+}
+
+/// Department — organizational unit within a company
+model Department {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  parentId    String?
+  companyId   String
+
+  parent   Department?  @relation("DeptHierarchy", fields: [parentId], references: [id])
+  children Department[] @relation("DeptHierarchy")
+  company  Company      @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  agents   Agent[]
+
+  @@map("departments")
+}
+
+/// Agent — AI employee with SOP, model, tools, and skills
+model Agent {
+  id           String      @id @default(uuid())
+  name         String
+  role         String
+  sop          String      @db.Text
+  model        String
+  tools        String[]
+  skills       String[]
+  status       AgentStatus @default(IDLE)
+  isAlwaysOn   Boolean     @default(false)
+  cronSchedule String?
+  departmentId String
+
+  department       Department       @relation(fields: [departmentId], references: [id], onDelete: Cascade)
+  tasks            Task[]
+  toolPermissions  ToolPermission[]
+  auditLogs        AuditLog[]
+  sentMessages     Message[]        @relation("MessageFrom")
+  receivedMessages Message[]        @relation("MessageTo")
+
+  @@map("agents")
+}
+
+/// Task — work item assigned to an agent
+model Task {
+  id           String     @id @default(uuid())
+  description  String     @db.Text
+  status       TaskStatus @default(PENDING)
+  priority     Int        @default(5)
+  parentTaskId String?
+  assignedToId String?
+  result       String?    @db.Text
+  errorLog     String?    @db.Text
+  retryCount   Int        @default(0)
+  tokenUsage   Int        @default(0)
+  createdAt    DateTime   @default(now())
+  completedAt  DateTime?
+
+  parentTask      Task?            @relation("TaskDecomposition", fields: [parentTaskId], references: [id])
+  subTasks        Task[]           @relation("TaskDecomposition")
+  assignedTo      Agent?           @relation(fields: [assignedToId], references: [id], onDelete: SetNull)
+  approvalRequest ApprovalRequest?
+  correctionLog   CorrectionLog?
+
+  @@map("tasks")
+}
+
+/// Message — inter-agent communication
+model Message {
+  id          String      @id @default(uuid())
+  fromAgentId String
+  toAgentId   String
+  content     String      @db.Text
+  type        MessageType
+  metadata    Json?
+  createdAt   DateTime    @default(now())
+
+  fromAgent Agent @relation("MessageFrom", fields: [fromAgentId], references: [id], onDelete: Cascade)
+  toAgent   Agent @relation("MessageTo", fields: [toAgentId], references: [id], onDelete: Cascade)
+
+  @@map("messages")
+}
+
+/// CorrectionLog — owner corrections for self-learning (Phase 26)
+model CorrectionLog {
+  id            String   @id @default(uuid())
+  taskId        String   @unique
+  agentId       String
+  context       String   @db.Text
+  wrongOutput   String   @db.Text
+  correction    String   @db.Text
+  ruleExtracted String   @db.Text
+  vectorId      String?
+  createdAt     DateTime @default(now())
+
+  task Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  @@map("correction_logs")
+}
+
+/// AuditLog — tracks all agent actions
+model AuditLog {
+  id        String   @id @default(uuid())
+  agentId   String
+  action    String
+  details   Json
+  timestamp DateTime @default(now())
+
+  agent Agent @relation(fields: [agentId], references: [id], onDelete: Cascade)
+
+  @@map("audit_logs")
+}
+
+/// ToolPermission — controls which tools each agent can use
+model ToolPermission {
+  id        String   @id @default(uuid())
+  agentId   String
+  toolName  String
+  granted   Boolean  @default(true)
+  grantedBy String
+  createdAt DateTime @default(now())
+
+  agent Agent @relation(fields: [agentId], references: [id], onDelete: Cascade)
+
+  @@unique([agentId, toolName])
+  @@map("tool_permissions")
+}
+
+/// ApprovalRequest — HITL approval workflow (Phase 15)
+model ApprovalRequest {
+  id            String         @id @default(uuid())
+  taskId        String         @unique
+  status        ApprovalStatus @default(PENDING)
+  policy        String
+  reason        String
+  ownerResponse String?
+  telegramMsgId String?
+  createdAt     DateTime       @default(now())
+  resolvedAt    DateTime?
+
+  task Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  @@map("approval_requests")
 }
