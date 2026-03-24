@@ -25,6 +25,7 @@ import { getStatusData } from "./commands/status";
 import { formatOutput, OutputFormat } from "./utils/output";
 import { companyCommand } from "./commands/company";
 import { agentCommand } from "./commands/agent";
+import { toolCommand, auditCommand } from "./commands/tool";
 
 const program = new Command();
 
@@ -59,6 +60,12 @@ program.addCommand(companyCommand);
 
 // === ae agent (Phase 6-7) ===
 program.addCommand(agentCommand);
+
+// === ae tool (Phase 8) ===
+program.addCommand(toolCommand);
+
+// === ae audit (Phase 8) ===
+program.addCommand(auditCommand);
 
 // === Placeholder groups (added in future phases) ===
 program
