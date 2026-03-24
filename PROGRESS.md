@@ -4,7 +4,7 @@
 
 ---
 
-## Session Hiện Tại: Session 10 (Vector Memory)
+## Session Hiện Tại: Session 11 (Conversation Memory)
 **Status**: ✅ Completed
 **Ngày**: 2026-03-24
 
@@ -23,7 +23,8 @@
 | S8 - Tools & Security | ✅ Completed | ToolRegistry + permissions + audit + CLI | 1 commit |
 | S9 - Task Engine | ✅ Completed | TaskDecomposer + ErrorRecovery + CLI | 1 commit |
 | S10 - Vector Memory | ✅ Completed | VectorStore + EmbeddingService + RedisSTM + CLI | 1 commit |
-| S11 - Conversation Mem | ⬜ Not Started | ConversationLogger + ContextBuilder | — |
+| S11 - Conversation Mem | ✅ Completed | ConversationLogger + DocumentIngester + CLI ingest | 1 commit |
+| S12 - Knowledge Engine | ⬜ Not Started | LightRAG + ContextBuilder | — |
 
 ---
 
