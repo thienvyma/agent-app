@@ -4,7 +4,7 @@
 
 ---
 
-## Session Hiện Tại: Session 9 (Task Engine)
+## Session Hiện Tại: Session 10 (Vector Memory)
 **Status**: ✅ Completed
 **Ngày**: 2026-03-24
 
@@ -22,7 +22,8 @@
 | S7 - Agent Lifecycle | ✅ Completed | AgentOrchestrator + HealthMonitor + CEO Config | 1 commit |
 | S8 - Tools & Security | ✅ Completed | ToolRegistry + permissions + audit + CLI | 1 commit |
 | S9 - Task Engine | ✅ Completed | TaskDecomposer + ErrorRecovery + CLI | 1 commit |
-| S10 - Vector Memory | ⬜ Not Started | VectorStore + documents + search | — |
+| S10 - Vector Memory | ✅ Completed | VectorStore + EmbeddingService + RedisSTM + CLI | 1 commit |
+| S11 - Conversation Mem | ⬜ Not Started | ConversationLogger + ContextBuilder | — |
 
 ---
 
