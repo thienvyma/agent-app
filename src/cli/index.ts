@@ -26,6 +26,7 @@ import { formatOutput, OutputFormat } from "./utils/output";
 import { companyCommand } from "./commands/company";
 import { agentCommand } from "./commands/agent";
 import { toolCommand, auditCommand } from "./commands/tool";
+import { taskCommand } from "./commands/task";
 
 const program = new Command();
 
@@ -67,13 +68,8 @@ program.addCommand(toolCommand);
 // === ae audit (Phase 8) ===
 program.addCommand(auditCommand);
 
-// === Placeholder groups (added in future phases) ===
-program
-  .command("task")
-  .description("Manage tasks (Phase 9)")
-  .action(() => {
-    console.log(JSON.stringify({ message: "Task commands available from Phase 9" }));
-  });
+// === ae task (Phase 9) ===
+program.addCommand(taskCommand);
 
 program
   .command("memory")
