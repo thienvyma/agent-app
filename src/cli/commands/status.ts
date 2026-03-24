@@ -81,18 +81,49 @@ function getUptime(): string {
 }
 
 /**
+ * Parse host and port from a URL string.
+ *
+ * @param url - URL string (e.g., "postgresql://user:pass@host:5432/db")
+ * @param defaultHost - Fallback host
+ * @param defaultPort - Fallback port
+ * @returns Parsed { host, port }
+ */
+function parseHostPort(
+  url: string | undefined,
+  defaultHost: string,
+  defaultPort: number
+): { host: string; port: number } {
+  if (!url) return { host: defaultHost, port: defaultPort };
+  try {
+    // Handle redis:// and postgresql:// URLs
+    const parsed = new URL(url);
+    return {
+      host: parsed.hostname || defaultHost,
+      port: parsed.port ? parseInt(parsed.port, 10) : defaultPort,
+    };
+  } catch {
+    return { host: defaultHost, port: defaultPort };
+  }
+}
+
+/**
  * Gather system status data.
- * Checks all 4 services and returns structured StatusData.
+ * Checks all 4 services using connection URLs from .env.
  *
  * @returns StatusData with service connectivity and placeholder agent/task counts
  */
 export async function getStatusData(): Promise<StatusData> {
+  const pg = parseHostPort(process.env.DATABASE_URL, "localhost", 5432);
+  const rd = parseHostPort(process.env.REDIS_URL, "localhost", 6379);
+  const oc = parseHostPort(process.env.OPENCLAW_API_URL, "localhost", 18789);
+  const ol = parseHostPort(process.env.OLLAMA_URL, "localhost", 11434);
+
   // Check services in parallel
   const [postgresql, redis, openclaw, ollama] = await Promise.all([
-    checkPort("localhost", 5432),
-    checkPort("localhost", 6379),
-    checkPort("localhost", 18789),
-    checkPort("localhost", 11434),
+    checkPort(pg.host, pg.port),
+    checkPort(rd.host, rd.port),
+    checkPort(oc.host, oc.port),
+    checkPort(ol.host, ol.port),
   ]);
 
   return {

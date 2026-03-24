@@ -1,4 +1,4 @@
-﻿# Document Index - Agentic Enterprise
+# Document Index - Agentic Enterprise
 
 > TAT CA docs va cach su dung. AI DOC Day TRUOC khi bat dau bat ky session nao.
 > Link voi nhau de tranh roi rac khi lam viec.
@@ -38,7 +38,7 @@
 | Phase | File | Phu thuoc | Docs lien quan |
 |---|---|---|---|
 | P1 Foundation | docs/phases/phase-01-foundation/README.md | (none) | VIBE_CODING_REFERENCE.md |
-| P2 CLI | docs/phases/phase-02-cli/README.md | P1 | CLI-Anything repo |
+| P2 CLI | docs/phases/phase-02-cli/README.md | P1 | DECISIONS.md (D14: Commander.js) |
 
 ### Giai Doan B: Engine (P3-4)
 | Phase | File | Phu thuoc | Docs lien quan |

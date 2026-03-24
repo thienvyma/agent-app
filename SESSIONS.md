@@ -18,10 +18,10 @@
 
 ### Phase 2: CLI Environment (S2)
 
-**Session 2** — CLI-Anything + khung `ae` CLI. Commander.js scaffold. Cấu trúc: `ae <group> <command>`. Output JSON. Tạo `ae status` + `ae --help`.
+**Session 2** ✅ — Commander.js `ae` CLI (D14: CLI-Anything evaluated → rejected). Cấu trúc: `ae <group> <command>`. Output JSON. Tạo `ae status` + `ae --help`.
 - Files: src/cli/index.ts, src/cli/commands/status.ts, src/cli/utils/output.ts
-- Test: `ae status` trả JSON, `ae --help` liệt kê groups
-- CLI: `ae status`, `ae --help`
+- Test: `ae status` trả JSON (7/7 pass), `ae --help` liệt kê 8 groups
+- CLI: `ae status`, `ae status --format table`, `ae --help`
 - Commit: `feat(cli): ae CLI framework + ae status`
 
 ---

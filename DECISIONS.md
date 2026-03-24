@@ -113,7 +113,7 @@ CEO phân tích:
 | Ollama | AI model + embedding local, $0 | OpenAI API (tốn tiền) |
 | Socket.IO | Realtime dashboard updates | WebSocket raw (no fallback) |
 | grammY | Telegram bot, lightweight | Telegraf (bigger) |
-| CLI-Anything | Agent-native CLI, hỗ trợ OpenClaw | Tự build from scratch |
+| Commander.js | Cùng TypeScript, custom logic, npm | CLI-Anything (Python, wrap-focused — xem D14) |
 
 ---
 

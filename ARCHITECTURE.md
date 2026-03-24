@@ -159,7 +159,7 @@ Local Processes:
 ```
 A. Nền Tảng
   Phase 1:  Foundation & Scaffold      (S0-S1)   ← S0 ✅
-  Phase 2:  CLI Environment            (S2)      ⭐ CLI-Anything + ae framework
+  Phase 2:  CLI Environment            (S2)      ✅ Commander.js ae CLI (D14)
 B. Engine
   Phase 3:  Engine Interface            (S3)
   Phase 4:  OpenClaw Adapter            (S4)
