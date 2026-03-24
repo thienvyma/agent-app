@@ -4,7 +4,7 @@
 
 ---
 
-## Session Hiện Tại: Session 4 (OpenClaw Adapter)
+## Session Hiện Tại: Session 5 (DB Schema)
 **Status**: ✅ Completed
 **Ngày**: 2026-03-24
 
@@ -17,7 +17,8 @@
 | S2 - CLI | ✅ Completed | Commander.js ae CLI + ae status | 1 commit |
 | S3 - Engine Interface | ✅ Completed | IAgentEngine + MockAdapter + types | 1 commit |
 | S4 - OpenClaw Adapter | ✅ Completed | OpenClawAdapter + HTTP client + Factory | 1 commit |
-| S5 - DB Schema | ⬜ Not Started | Prisma schema + migrations | — |
+| S5 - DB Schema | ✅ Completed | 9 tables + 4 enums + seed + singleton | 1 commit |
+| S6 - Company Manager | ⬜ Not Started | Company CRUD + service layer | — |
 
 ---
 
@@ -202,3 +203,27 @@ docs/
 → **Session 5: DB Schema** — Prisma schema + migrations
 → Xem chi tiết: `SESSIONS.md` → Session 5
 → Xem chi tiết: `docs/phases/phase-05-db-schema/README.md`
+
+---
+
+## Session 5: DB Schema ✅
+
+### Đã làm:
+1. `prisma/schema.prisma` — 9 tables, 4 enums, self-refs, cascade deletes
+2. `src/lib/prisma.ts` — Prisma singleton (hot-reload safe)
+3. `prisma/seed.ts` — Seed: 1 company, 3 departments, 3 agents, 9 tool permissions
+
+### Commit: `feat(db): Prisma schema 9 tables + 4 enums + seed + singleton (migration init)`
+
+### Verification:
+- ✅ Migration `20260324024049_init` applied
+- ✅ 9/9 tables exist: companies(1), departments(3), agents(3), tool_permissions(9)
+- ✅ Seed: `npx tsx prisma/seed.ts` → 🎉 completed
+- ✅ `npx jest` → 32/32 pass (3 suites)
+
+### Lỗi Tồn Đọng: Không có
+
+### Bước Tiếp Theo:
+→ **Session 6: Company Manager** — Company + Agent CRUD service layer
+→ Xem chi tiết: `SESSIONS.md` → Session 6
+→ Xem chi tiết: `docs/phases/phase-06-company-manager/README.md`
