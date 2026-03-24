@@ -331,9 +331,11 @@ Scopes: foundation, scaffold, cli, adapter, company, orchestrator,
 □ Đã đọc RULES.md
 □ Đã đọc SESSIONS.md → Session N
 □ Đã đọc docs/phases/phase-XX/README.md
+□ Đã đọc docs/INDEX.md → xem docs liên quan phase
 □ Đã liệt kê files cần tạo (≤6)
 □ Đã liệt kê tests cần viết
 □ Đã liệt kê CLI commands cần thêm
+□ Đã CROSS-CHECK plan với phase README (mọi item trong spec đều có trong plan)
 □ Đã trình kế hoạch cho owner → được xác nhận
 □ Không có dependency chưa xong blocking session này
 
@@ -343,6 +345,19 @@ Scopes: foundation, scaffold, cli, adapter, company, orchestrator,
 □ Refactor
 □ Commit file
 
+=== ⭐ SPEC VERIFICATION (trước khi đóng session) ===
+□ Mở phase README → so sánh TỪNG DÒNG với code đã viết
+□ Mọi file trong spec → tồn tại trên disk?
+□ Mọi dependency trong spec → đã install?
+□ Mọi config file trong spec → đã tạo?
+□ Mọi "Kiem tra" item trong spec → đã chạy thật + có evidence?
+□ Nếu thiếu → FIX NGAY trước khi đóng session
+
+=== ⭐ DOC CONSISTENCY CHECK (nếu thay đổi quyết định) ===
+□ Grep toàn bộ docs cho thuật ngữ cũ → update hết
+□ Thêm decision vào DECISIONS.md
+□ Verify: không còn tham chiếu cũ trong bất kỳ file nào
+
 === SAU KHI CODE ===
 □ Tất cả tests pass
 □ CLI commands hoạt động
@@ -351,3 +366,4 @@ Scopes: foundation, scaffold, cli, adapter, company, orchestrator,
 □ Đã cập nhật architecture_state.json
 □ Commit cuối: docs: update progress session N
 ```
+

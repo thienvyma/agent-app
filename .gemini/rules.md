@@ -5,8 +5,10 @@ Ref: Anthropic best practices + obra/superpowers TDD methodology
 STEP 1 READ: PROGRESS.md → architecture_state.json → RULES.md → SESSIONS.md → docs/phases/phase-XX/README.md → docs/INDEX.md (cross-reference map)
 STEP 2 PLAN + APPROVE: List files (max 6), tests, CLI commands → PRESENT to owner → WAIT for confirmation before coding
 STEP 3 CODE (TDD per file): Write test (FAIL) → Write code (PASS) → Refactor → Commit per file
-STEP 4 CLOSE: UPDATE PROGRESS.md + architecture_state.json → commit "docs: update progress session N"
-STEP 5 IF architecture changed: UPDATE ARCHITECTURE.md + DECISIONS.md + affected phase READMEs
+STEP 4 CLOSE: RUN SPEC VERIFICATION (compare code vs phase README line-by-line) → FIX any missing items
+STEP 5 CLOSE: IF decision changed → DOC CONSISTENCY CHECK (grep old term in all docs → update)
+STEP 6 CLOSE: UPDATE PROGRESS.md + architecture_state.json → commit "docs: update progress session N"
+STEP 7 IF architecture changed: UPDATE ARCHITECTURE.md + DECISIONS.md + affected phase READMEs
 
 === CORE RULES ===
 LOCAL-FIRST: Next.js localhost, $0 cost, Ollama + OpenClaw local
