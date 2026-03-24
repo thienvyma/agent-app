@@ -4,7 +4,7 @@
 
 ---
 
-## Session Hiện Tại: Session 3 (Engine Interface)
+## Session Hiện Tại: Session 4 (OpenClaw Adapter)
 **Status**: ✅ Completed
 **Ngày**: 2026-03-24
 
@@ -16,7 +16,8 @@
 | S1 - Scaffold | ✅ Completed | Next.js 15 + Docker + Prisma + NextAuth | 1 commit |
 | S2 - CLI | ✅ Completed | Commander.js ae CLI + ae status | 1 commit |
 | S3 - Engine Interface | ✅ Completed | IAgentEngine + MockAdapter + types | 1 commit |
-| S4 - OpenClaw Adapter | ⬜ Not Started | OpenClawAdapter wraps API | — |
+| S4 - OpenClaw Adapter | ✅ Completed | OpenClawAdapter + HTTP client + Factory | 1 commit |
+| S5 - DB Schema | ⬜ Not Started | Prisma schema + migrations | — |
 
 ---
 
@@ -173,3 +174,31 @@ docs/
 → **Session 4: OpenClaw Adapter** — OpenClawAdapter wraps Gateway API
 → Xem chi tiết: `SESSIONS.md` → Session 4
 → Xem chi tiết: `docs/phases/phase-04-openclaw-adapter/README.md`
+
+---
+
+## Session 4: OpenClaw Adapter ✅
+
+### Đã làm:
+1. `tests/adapter/openclaw-adapter.test.ts` — 14 TDD tests (mocked HTTP)
+2. `src/core/adapter/openclaw-client.ts` — Axios wrapper (30s timeout, 3x retry, exponential backoff)
+3. `src/core/adapter/openclaw-adapter.ts` — IAgentEngine via HTTP (7 methods, session mapping)
+4. `src/core/adapter/adapter-factory.ts` — Factory (mock/openclaw/env)
+
+### Commit: `feat(adapter): OpenClawAdapter + HTTP client + AdapterFactory + tests (14/14 pass)`
+
+### SPEC VERIFICATION: 100% pass
+- 4/4 files, 7/7 methods, implements IAgentEngine ✅
+- Client: timeout 30s ✅, retry 3x ✅, backoff ✅, error handling ✅
+- Factory: create("mock") ✅, create("openclaw") ✅, AGENT_ENGINE env ✅
+- All <300 lines ✅
+
+### Verification:
+- ✅ `npx jest` → 32/32 pass (3 suites)
+
+### Lỗi Tồn Đọng: Không có
+
+### Bước Tiếp Theo:
+→ **Session 5: DB Schema** — Prisma schema + migrations
+→ Xem chi tiết: `SESSIONS.md` → Session 5
+→ Xem chi tiết: `docs/phases/phase-05-db-schema/README.md`
