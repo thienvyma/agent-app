@@ -11,7 +11,7 @@
  *   Phase 7:  ae agent deploy/undeploy
  *   Phase 8:  ae tool, ae audit
  *   Phase 9:  ae task
- *   Phase 12: ae memory
+ *   Phase 10: ae memory
  *   Phase 13: ae message
  *   Phase 14: ae trigger
  *   Phase 15: ae approve
@@ -27,6 +27,7 @@ import { companyCommand } from "./commands/company";
 import { agentCommand } from "./commands/agent";
 import { toolCommand, auditCommand } from "./commands/tool";
 import { taskCommand } from "./commands/task";
+import { registerMemoryCommands } from "./commands/memory";
 
 const program = new Command();
 
@@ -71,12 +72,8 @@ program.addCommand(auditCommand);
 // === ae task (Phase 9) ===
 program.addCommand(taskCommand);
 
-program
-  .command("memory")
-  .description("Knowledge base operations (Phase 10-12)")
-  .action(() => {
-    console.log(JSON.stringify({ message: "Memory commands available from Phase 10" }));
-  });
+// === ae memory (Phase 10) ===
+registerMemoryCommands(program);
 
 program
   .command("cost")
