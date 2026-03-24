@@ -87,7 +87,7 @@ Phase 18: ae cost report/budget
 [x] ae --help -> lists groups: agent, task, company, memory, cost, trigger, approve
 [x] ae status --format table -> ASCII table
 [x] DECISIONS.md D14 — Commander.js vs CLI-Anything documented
-[ ] ae status reads ports from .env (fix in progress)
+[x] ae status reads ports from .env (fixed: parseHostPort + process.env)
 ```
 
 ## Edge Cases
