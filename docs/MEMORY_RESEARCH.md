@@ -181,3 +181,11 @@ Phase 8+: Tích hợp Mem0 hoặc Cognee nếu cần nâng cao
 > - **Tier 3: Redis** — session STM
 > 
 > Lý do: OpenClaw đã có memory system tốt cho per-agent → không cần rebuild. Xem DECISIONS.md → D12.
+
+> [!IMPORTANT]
+> **Cập nhật (D15)**: Phase 12 sẽ dùng **LightRAG** (graph-enhanced RAG) thay vì KnowledgeBase tự build.
+> - LightRAG kết hợp vector search + knowledge graph (entity extraction + relationships)
+> - Dual-level retrieval: granular (entity) + thematic (topic)
+> - PostgreSQL backend — dùng chung DB, không thêm Neo4j
+> - Chạy như Python Docker service, app giao tiếp qua HTTP
+> - Xem DECISIONS.md → D15

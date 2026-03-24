@@ -240,3 +240,44 @@ ae cost report
 
 **Ngày**: 2026-03-24 (Session 2)
 
+---
+
+## D15: Knowledge Engine — LightRAG thay vì KnowledgeBase tự build
+
+**Quyết định**: Dùng LightRAG (graph-enhanced RAG) cho Phase 12 thay vì tự build KnowledgeBase.
+
+**LightRAG là gì**:
+- RAG + Knowledge Graph — kết hợp vector search với đồ thị tri thức
+- Dual-level retrieval: Low-level (granular entity) + High-level (thematic)
+- Incremental update (thêm data mới, không rebuild toàn bộ)
+- Token hiệu quả: < 100 tokens vs 610k+ (GraphRAG)
+- PostgreSQL backend (từ Jan 2025)
+
+**Lý do chọn**:
+1. **Multi-agent company cần relationship-aware search** — flat cosine search không đủ cho "Agent A hỏi kết quả Agent B"
+2. **Knowledge Graph tự động** — LightRAG extract entities/relations từ documents, không cần manual tagging
+3. **PostgreSQL backend** — dùng chung 1 DB, không thêm Neo4j
+4. **Open-source** — MIT license, active development (arXiv Oct 2024)
+5. **Accuracy >80%** — benchmark legal docs, vượt NaiveRAG (~60%)
+
+**Alternatives đã cân nhắc**:
+| Option | Ưu | Nhược | Quyết định |
+|---|---|---|---|
+| KnowledgeBase tự build (pgvector) | Đơn giản, 0 dep | Flat search, no relationships | ❌ Reject |
+| GraphRAG (Microsoft) | Graph + vector | 610k tokens, $4-7/doc, heavy | ❌ Reject |
+| LightRAG (PostgreSQL backend) | Graph + vector, lightweight, cheap | Python service riêng | ✅ **Chọn** |
+| Mem0 | Production-ready memory | No knowledge graph | ❌ Reject |
+
+**Ảnh hưởng**:
+- Session 11: KHÔNG thay đổi (ConversationLogger + DocumentIngester vẫn giữ, feed data vào cả pgvector VÀ LightRAG)
+- Session 12: THAY ĐỔI — KnowledgeBase → LightRAGClient (HTTP bridge) + ContextBuilder dùng LightRAG search
+- Session 26: Self-Learning hưởng lợi từ graph (correction patterns linked qua entities)
+
+**Integration**:
+```
+App (TypeScript) → HTTP API → LightRAG Service (Python) → PostgreSQL
+                                    ↑
+                              Ollama (embedding + LLM extraction)
+```
+
+**Ngày**: 2026-03-24 (Session 10 review)

@@ -112,11 +112,12 @@
 
 ### Phase 12: Knowledge Engine (S12)
 
-**Session 12** — KnowledgeBase (hybrid search: keyword + semantic) + ContextBuilder (build context per task from all sources) + tests.
-- Files: src/core/memory/knowledge-base.ts, src/core/memory/context-builder.ts, tests/memory/knowledge-base.test.ts
-- Test: ContextBuilder returns meaningful context for a task
-- CLI: `ae memory search "query"`, `ae memory list --type DOCUMENT`
-- Commit: `feat(memory): knowledge base + context builder`
+**Session 12** — **LightRAG integration (D15)**: LightRAGClient (HTTP bridge to Python LightRAG service) + ContextBuilder (build context per task using LightRAG graph search + VectorStore fallback) + Docker setup + tests.
+- Files: src/core/memory/lightrag-client.ts, src/core/memory/context-builder.ts, docker/lightrag/Dockerfile, tests/memory/knowledge-engine.test.ts
+- Docker: LightRAG Python service (port 9621, PostgreSQL backend, Ollama 192.168.1.35:8080)
+- Test: insert document → query → graph-enhanced results; ContextBuilder builds context with LightRAG
+- CLI: `ae memory search "query" --mode hybrid`, `ae memory graph-status`
+- Commit: `feat(memory): LightRAG client + context builder`
 
 ---
 
