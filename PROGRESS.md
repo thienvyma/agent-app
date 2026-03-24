@@ -4,7 +4,7 @@
 
 ---
 
-## Session Hiện Tại: Session 2 (CLI Environment)
+## Session Hiện Tại: Session 3 (Engine Interface)
 **Status**: ✅ Completed
 **Ngày**: 2026-03-24
 
@@ -15,7 +15,8 @@
 | S0 - Foundation | ✅ Completed | Foundation docs + rules + skills | 24 commits |
 | S1 - Scaffold | ✅ Completed | Next.js 15 + Docker + Prisma + NextAuth | 1 commit |
 | S2 - CLI | ✅ Completed | Commander.js ae CLI + ae status | 1 commit |
-| S3 - Engine Interface | ⬜ Not Started | IAgentEngine + MockAdapter | — |
+| S3 - Engine Interface | ✅ Completed | IAgentEngine + MockAdapter + types | 1 commit |
+| S4 - OpenClaw Adapter | ⬜ Not Started | OpenClawAdapter wraps API | — |
 
 ---
 
@@ -144,3 +145,31 @@ docs/
 → **Session 3: Engine Interface** — IAgentEngine + MockAdapter + types
 → Xem chi tiết: `SESSIONS.md` → Session 3
 → Xem chi tiết: `docs/phases/phase-03-engine-interface/README.md`
+
+---
+
+## Session 3: Engine Interface ✅
+
+### Đã làm:
+1. `tests/adapter/mock-adapter.test.ts` — 11 TDD tests (viết TRƯỚC code)
+2. `src/types/agent.ts` — AgentConfig (10 fields), AgentStatus (6 fields, 5 states), AgentResponse (5 fields), ToolCall (4 fields)
+3. `src/core/adapter/i-agent-engine.ts` — IAgentEngine interface (7 methods, OpenClaw API mapping in JSDoc)
+4. `src/core/adapter/mock-adapter.ts` — MockAdapter (Map store, keyword responses, simulated delays)
+
+### Commit: `feat(engine): IAgentEngine interface + types + MockAdapter + tests (11/11 pass)`
+
+### SPEC VERIFICATION: 100% pass
+- 4/4 files OK, 4/4 types OK, 19/19 fields OK, 7/7 methods OK
+- MockAdapter implements IAgentEngine ✅, Map store ✅, 100ms delay ✅
+- No `any` type ✅, all <300 lines ✅
+
+### Verification:
+- ✅ `npx jest` → 18/18 pass (2 suites, 1.8s)
+- ✅ TypeScript strict mode compile OK
+
+### Lỗi Tồn Đọng: Không có
+
+### Bước Tiếp Theo:
+→ **Session 4: OpenClaw Adapter** — OpenClawAdapter wraps Gateway API
+→ Xem chi tiết: `SESSIONS.md` → Session 4
+→ Xem chi tiết: `docs/phases/phase-04-openclaw-adapter/README.md`

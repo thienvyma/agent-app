@@ -1,5 +1,5 @@
 import { MockAdapter } from "@/core/adapter/mock-adapter";
-import { AgentConfig, AgentStatus, AgentResponse } from "@/types/agent";
+import type { AgentConfig, AgentStatus } from "@/types/agent";
 
 describe("MockAdapter", () => {
   let adapter: MockAdapter;
@@ -110,8 +110,8 @@ describe("MockAdapter", () => {
 
       const agents = await adapter.listAgents();
       expect(agents).toHaveLength(2);
-      expect(agents.map((a) => a.id)).toContain("agent-ceo-001");
-      expect(agents.map((a) => a.id)).toContain("agent-cfo-001");
+      expect(agents.map((a: AgentStatus) => a.id)).toContain("agent-ceo-001");
+      expect(agents.map((a: AgentStatus) => a.id)).toContain("agent-cfo-001");
     });
 
     it("should return empty array when no agents deployed", async () => {
