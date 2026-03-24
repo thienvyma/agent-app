@@ -23,6 +23,8 @@
 import { Command } from "commander";
 import { getStatusData } from "./commands/status";
 import { formatOutput, OutputFormat } from "./utils/output";
+import { companyCommand } from "./commands/company";
+import { agentCommand } from "./commands/agent";
 
 const program = new Command();
 
@@ -52,26 +54,18 @@ program
     }
   });
 
-// === Placeholder command groups (added in future phases) ===
-program
-  .command("agent")
-  .description("Manage AI agents (Phase 6-7)")
-  .action(() => {
-    console.log(JSON.stringify({ message: "Agent commands available from Phase 6" }));
-  });
+// === ae company (Phase 6) ===
+program.addCommand(companyCommand);
 
+// === ae agent (Phase 6-7) ===
+program.addCommand(agentCommand);
+
+// === Placeholder groups (added in future phases) ===
 program
   .command("task")
   .description("Manage tasks (Phase 9)")
   .action(() => {
     console.log(JSON.stringify({ message: "Task commands available from Phase 9" }));
-  });
-
-program
-  .command("company")
-  .description("Manage company structure (Phase 6)")
-  .action(() => {
-    console.log(JSON.stringify({ message: "Company commands available from Phase 6" }));
   });
 
 program
