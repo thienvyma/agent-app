@@ -4,7 +4,7 @@
 
 ---
 
-## Session Hiện Tại: Session 5 (DB Schema)
+## Session Hiện Tại: Session 6 (Company Manager)
 **Status**: ✅ Completed
 **Ngày**: 2026-03-24
 
@@ -18,7 +18,8 @@
 | S3 - Engine Interface | ✅ Completed | IAgentEngine + MockAdapter + types | 1 commit |
 | S4 - OpenClaw Adapter | ✅ Completed | OpenClawAdapter + HTTP client + Factory | 1 commit |
 | S5 - DB Schema | ✅ Completed | 9 tables + 4 enums + seed + singleton | 1 commit |
-| S6 - Company Manager | ⬜ Not Started | Company CRUD + service layer | — |
+| S6 - Company Manager | ✅ Completed | CRUD + Hierarchy + AgentConfigBuilder + CLI | 1 commit |
+| S7 - Agent Lifecycle | ⬜ Not Started | Deploy/undeploy via IAgentEngine | — |
 
 ---
 
@@ -227,3 +228,29 @@ docs/
 → **Session 6: Company Manager** — Company + Agent CRUD service layer
 → Xem chi tiết: `SESSIONS.md` → Session 6
 → Xem chi tiết: `docs/phases/phase-06-company-manager/README.md`
+
+---
+
+## Session 6: Company Manager ✅
+
+### Đã làm:
+1. `src/core/company/company-manager.ts` — 8 CRUD methods (createCompany, getDept, createAgent, deleteAgent...)
+2. `src/core/company/hierarchy-engine.ts` — getOrgTree, findAgentsByRole, findBestAgent (keyword scoring)
+3. `src/core/company/agent-config-builder.ts` — fromDBAgent (Prisma→AgentConfig), buildSystemPrompt
+4. `src/cli/commands/company.ts` — ae company create/info
+5. `src/cli/commands/agent.ts` — ae agent create/list
+6. `src/cli/index.ts` — Updated with real company/agent commands
+
+### Commit: `feat(company): CompanyManager + HierarchyEngine + AgentConfigBuilder + CLI (12/12 tests)`
+
+### Verification:
+- ✅ `npx jest` → 44/44 pass (4 suites)
+- ✅ `ae agent list` → 3 agents from DB (JSON output)
+- ✅ `ae company info` → org tree (My Enterprise, 3 departments)
+
+### Lỗi Tồn Đọng: Không có
+
+### Bước Tiếp Theo:
+→ **Session 7: Agent Lifecycle** — Deploy/undeploy via IAgentEngine
+→ Xem chi tiết: `SESSIONS.md` → Session 7
+→ Xem chi tiết: `docs/phases/phase-07-agent-lifecycle/README.md`
