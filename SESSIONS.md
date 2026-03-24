@@ -239,3 +239,19 @@
 - Files: src/core/feedback/feedback-loop.ts, src/core/feedback/correction-log.ts, src/core/feedback/prompt-injector.ts, tests/feedback/feedback-loop.test.ts
 - Test: owner reject → rule created → next time agent applies rule
 - Commit: `feat(feedback): self-learning from corrections`
+
+---
+
+## Giai Đoạn I: Agent Tooling (P27, S27)
+
+### Phase 27: CLI-Anything Integration (S27)
+
+**Session 27** — CLI-Anything (HKUDS, 13k+ ⭐) tạo agent-native CLI environment. Wrap các tools có sẵn thành CLI mà agents tự discover + install + sử dụng.
+- **Wrap targets**: OpenClaw CLI, PostgreSQL, Redis, Git, File System
+- **CLI-Hub catalog**: agents browse + install tools tự động từ registry
+- **SKILL.md generation**: mỗi wrapped tool tạo skill file cho agent discovery
+- Files: docker/cli-anything/Dockerfile, src/core/tools/cli-anything-bridge.ts, src/core/tools/tool-catalog.ts, tests/tools/cli-anything.test.ts
+- Dependencies: Phase 8 (ToolRegistry), Phase 26 (all core done)
+- Test: agent discover → install → execute wrapped tool → result returned
+- CLI: `ae tool wrap <app>`, `ae tool catalog`
+- Commit: `feat(tools): CLI-Anything agent environment integration`
