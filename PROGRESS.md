@@ -4,7 +4,7 @@
 
 ---
 
-## Session Hiện Tại: Session 46 (Engine Singleton)
+## Session Hiện Tại: Session 47 (Agent Wiring)
 **Status**: ✅ Completed
 **Ngày**: 2026-03-25
 
@@ -63,7 +63,7 @@
 | | | | |
 | **--- SUPPLEMENTARY (Wire Real) ---** | | | |
 | **S46 - Engine Singleton** | ✅ Completed | engine-singleton + getEngine/getPipeline singletons | — |
-| **S47 - Agent Wiring** | ⬜ Not Started | Deploy/chat via engine + pipeline | — |
+| **S47 - Agent Wiring** | ✅ Completed | /api/agents/[id]/chat + deploy/undeploy via singleton | — |
 | **S48 - OpenClaw Config UI** | ⬜ Not Started | /settings/openclaw + connection test | — |
 | **S49 - Telegram Real** | ⬜ Not Started | grammY Bot + webhook + real startup | — |
 | **S50 - Env + Health + Final** | ⬜ Not Started | .env.example + full health + final E2E | — |
