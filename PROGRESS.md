@@ -78,8 +78,8 @@
 | | | | |
 | **--- MISSING UI FIX (S55-S58) ---** | | | |
 | **S55 - Telegram Config** | ✅ Completed | Settings tab: token, start/stop, status, commands | — |
-| **S56 - Pipeline Viewer** | 🟡 In Progress | Agent Detail: 8-step execution display | — |
-| **S57 - Multi-Tenant** | ⬜ Not Started | Company CRUD: create/switch tenants | — |
+| **S56 - Pipeline Viewer** | ✅ Completed | Agent Detail: 7-step execution viewer + Pipeline tab | — |
+| **S57 - Multi-Tenant** | 🟡 In Progress | Company CRUD: create/switch tenants | — |
 | **S58 - Realtime SSE** | ⬜ Not Started | SSE endpoint + live dashboard widget | — |
 
 ---

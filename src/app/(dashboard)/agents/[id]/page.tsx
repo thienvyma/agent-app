@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { AgentChat } from "../components/agent-chat";
+import { PipelineViewer } from "../components/pipeline-viewer";
 import {
   ArrowLeft,
   Play,
@@ -51,7 +52,7 @@ export default function AgentDetailPage() {
   const agentId = params.id as string;
   const [agent, setAgent] = useState<AgentDetail | null>(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<"chat" | "tasks" | "profile">("profile");
+  const [activeTab, setActiveTab] = useState<"chat" | "tasks" | "profile" | "pipeline">("profile");
 
   useEffect(() => {
     async function fetchAgent() {
@@ -114,7 +115,7 @@ export default function AgentDetailPage() {
 
       {/* Tabs */}
       <div className="flex gap-1 bg-[#1A1F2B] rounded-xl p-1 border border-[#2A303C] w-fit">
-        {(["profile", "tasks", "chat"] as const).map((tab) => (
+        {(["profile", "tasks", "pipeline", "chat"] as const).map((tab) => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
@@ -214,6 +215,10 @@ export default function AgentDetailPage() {
 
       {activeTab === "chat" && (
         <AgentChat agentId={agent.id} agentName={agent.name} />
+      )}
+
+      {activeTab === "pipeline" && (
+        <PipelineViewer agentId={agent.id} agentName={agent.name} />
       )}
     </div>
   );
