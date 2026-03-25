@@ -4,7 +4,7 @@
 
 ---
 
-## Session Hiện Tại: Session 41 (Realtime Integration)
+## Session Hiện Tại: Session 42 (OpenClaw Live)
 **Status**: ✅ Completed
 **Ngày**: 2026-03-25
 
@@ -56,7 +56,7 @@
 | **S39 - Knowledge & Feedback** | ✅ Completed | /knowledge search + corrections | — |
 | **S40 - Settings & Scheduling** | ✅ Completed | /settings + /scheduling cron + departments API | — |
 | **S41 - Realtime Integration** | ✅ Completed | SSE hook + toasts + notification bell | — |
-| **S42 - OpenClaw Live** | ⬜ Not Started | Real AI connection + pipeline | — |
+| **S42 - OpenClaw Live** | ✅ Completed | AdapterFactory fallback + USE_MOCK_ADAPTER + live tests | — |
 | **S43 - Telegram Live** | ⬜ Not Started | Real bot + commands + alerts | — |
 | **S44 - Pipeline Wiring** | ⬜ Not Started | Full 8-step pipeline with real services | — |
 | **S45 - E2E & Polish** | ⬜ Not Started | E2E tests + UI polish + performance | — |
@@ -810,5 +810,24 @@ DailyReport (BUILD) → summary → Telegram
 ### Bước Tiếp Theo:
 → **Session 42: OpenClaw Live** — Real AI connection + pipeline
 → Xem chi tiết: `docs/phases/phase-42-openclaw-live/README.md`
+
+---
+
+## Session 42: OpenClaw Live ✅
+
+### Đã làm:
+1. `tests/integration/openclaw-live.test.ts` — 14 TDD tests (Red → Green)
+2. `src/core/adapter/adapter-factory.ts` — thêm `USE_MOCK_ADAPTER` env priority + `createWithFallback()` auto fallback
+
+### Verification:
+- ✅ `npx tsc --noEmit` → 0 errors
+- ✅ `npx jest` → 582/582 pass (39 suites)
+- ✅ TDD: Red (2 tests FAIL) → Green (14/14 pass)
+
+### Lỗi Tồn Đọng: Không có
+
+### Bước Tiếp Theo:
+→ **Session 43: Telegram Live** — Real bot + commands + alerts
+→ Xem chi tiết: `docs/phases/phase-43-telegram-live/README.md`
 
 ---
