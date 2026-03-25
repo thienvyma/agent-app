@@ -4,8 +4,8 @@
 
 ---
 
-## Session Hiện Tại: Session 53 (Final Integration)
-**Status**: ✅ Completed — ALL UI WIRED TO REAL
+## Session Hiện Tại: Session 54 (OpenClaw CLI Wrapper)
+**Status**: ✅ Completed
 **Ngày**: 2026-03-25
 
 ## Tổng Quan
@@ -72,6 +72,10 @@
 | **S51 - Dashboard Live** | ✅ Completed | Rewrote dashboard — 5 real API fetches, no mock | — |
 | **S52 - Engine Wiring** | ✅ Completed | deploy() in POST /api/agents + chat response fix | — |
 | **S53 - Final Integration** | ✅ Completed | 12 integration tests: no mock + full cycle | — |
+| | | | |
+| **--- OPENCLAW WRAPPER (S54-S55) ---** | | | |
+| **S54 - CLI Wrapper** | ✅ Completed | openclaw-cli.ts + 6 API routes + settings UI 5 sections | — |
+| **S55 - Settings Polish** | ⬜ Not Started | Browser test + polish | — |
 
 ---
 
