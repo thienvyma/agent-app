@@ -4,7 +4,7 @@
 
 ---
 
-## Session Hiện Tại: Session 43 (Telegram Live)
+## Session Hiện Tại: Session 44 (Pipeline Wiring)
 **Status**: ✅ Completed
 **Ngày**: 2026-03-25
 
@@ -58,7 +58,7 @@
 | **S41 - Realtime Integration** | ✅ Completed | SSE hook + toasts + notification bell | — |
 | **S42 - OpenClaw Live** | ✅ Completed | AdapterFactory fallback + USE_MOCK_ADAPTER + live tests | — |
 | **S43 - Telegram Live** | ✅ Completed | telegram-commands + reject/report + live tests | — |
-| **S44 - Pipeline Wiring** | ⬜ Not Started | Full 8-step pipeline with real services | — |
+| **S44 - Pipeline Wiring** | ✅ Completed | ServiceContainer DI + full 8-step pipeline tests | — |
 | **S45 - E2E & Polish** | ⬜ Not Started | E2E tests + UI polish + performance | — |
 
 ---
@@ -850,5 +850,27 @@ DailyReport (BUILD) → summary → Telegram
 ### Bước Tiếp Theo:
 → **Session 44: Pipeline Wiring** — Full 8-step pipeline with real services
 → Xem chi tiết: `docs/phases/phase-44-pipeline-wiring/README.md`
+
+---
+
+## Session 44: Full Pipeline Wiring ✅
+
+### Đã làm:
+1. `tests/integration/full-pipeline.test.ts` — 13 TDD tests (Red → Green)
+2. `src/lib/service-container.ts` — DI container: `createServiceContainer()` + `createPipelineFromContainer()`
+   - Resolves all 8 pipeline deps (engine, context, cost, budget, messageBus, approval, logger, realtime)
+   - `useMock` flag: MockAdapter vs OpenClawAdapter
+   - `blockedPatterns` for configurable approval policy
+
+### Verification:
+- ✅ `npx tsc --noEmit` → 0 errors
+- ✅ `npx jest` → 613/613 pass (41 suites)
+- ✅ TDD: Red (12 tests FAIL) → Green (13/13 pass)
+
+### Lỗi Tồn Đọng: Không có
+
+### Bước Tiếp Theo:
+→ **Session 45: E2E & Polish** — E2E tests + UI polish + performance
+→ Xem chi tiết: `docs/phases/phase-45-e2e-polish/README.md`
 
 ---
