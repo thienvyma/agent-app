@@ -106,6 +106,7 @@ export default function OpenClawSettingsPage() {
   const [gateway, setGateway] = useState<{ running: boolean; status: unknown; errors: string | null } | null>(null);
   const [models, setModels] = useState<{ models: unknown; status: unknown } | null>(null);
   const [configValidation, setConfigValidation] = useState<{ valid: boolean; output: unknown } | null>(null);
+  const [cliAvailable, setCliAvailable] = useState(true);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [actionLog, setActionLog] = useState<Array<{ time: string; action: string; result: string; ok: boolean }>>([]);
@@ -141,12 +142,25 @@ export default function OpenClawSettingsPage() {
         fetch("/api/openclaw/config?action=validate").then((r) => r.json()),
       ]);
 
-      if (vRes.status === "fulfilled") setVersion(vRes.value.data?.version ?? "unknown");
+      // Check if CLI is available by inspecting responses
+      let cliOk = true;
+      if (vRes.status === "fulfilled") {
+        const ver = vRes.value.data?.version ?? "";
+        const exitCode = vRes.value.data?.exitCode;
+        if (!ver || ver === "unknown" || exitCode === 1) cliOk = false;
+        setVersion(cliOk ? ver : "Not installed");
+      } else {
+        cliOk = false;
+        setVersion("Not installed");
+      }
+      setCliAvailable(cliOk);
+
       if (gRes.status === "fulfilled") setGateway(gRes.value.data ?? null);
-      if (mRes.status === "fulfilled") setModels(mRes.value.data ?? null);
-      if (cRes.status === "fulfilled") setConfigValidation(cRes.value.data ?? null);
+      if (mRes.status === "fulfilled") setModels(cliOk ? (mRes.value.data ?? null) : null);
+      if (cRes.status === "fulfilled") setConfigValidation(cliOk ? (cRes.value.data ?? null) : null);
     } catch (err) {
       console.error("[OpenClawSettings] fetch error:", err);
+      setCliAvailable(false);
     } finally {
       setLoading(false);
     }
@@ -192,6 +206,26 @@ export default function OpenClawSettingsPage() {
         </div>
         <StatusBadge ok={gateway?.running ?? false} label={gateway?.running ? "Gateway Online" : "Gateway Offline"} />
       </div>
+
+      {/* CLI Not Found Banner */}
+      {!cliAvailable && (
+        <div style={{
+          display: "flex", alignItems: "center", gap: 10,
+          padding: "14px 18px", borderRadius: 12, fontSize: 13,
+          background: "rgba(245,158,11,0.08)", border: "1px solid rgba(245,158,11,0.2)",
+          color: "#fbbf24",
+        }}>
+          <AlertTriangle size={18} />
+          <div>
+            <strong>OpenClaw CLI not found</strong>
+            <p style={{ margin: "4px 0 0", color: "#94a3b8", fontSize: 12 }}>
+              Install OpenClaw CLI to enable configuration management. Visit{" "}
+              <a href="https://openclaw.ai" target="_blank" rel="noreferrer" style={{ color: "#818cf8" }}>openclaw.ai</a>
+              {" "}for installation instructions.
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* ═══ 1. System Info ═══ */}
       <Panel title="System Info" icon={Server} iconColor="#818cf8">
@@ -261,9 +295,15 @@ export default function OpenClawSettingsPage() {
         <div style={{ display: "flex", flexDirection: "column", gap: 12, paddingTop: 16 }}>
           {/* Current model info */}
           <div style={{ padding: 12, background: "#0B0F19", borderRadius: 10, border: "1px solid #1E2535", fontSize: 13 }}>
-            <pre style={{ color: "#94a3b8", margin: 0, whiteSpace: "pre-wrap", maxHeight: 120, overflow: "auto" }}>
-              {models?.status ? (typeof models.status === "object" ? JSON.stringify(models.status, null, 2) : String(models.status)) : "No model data"}
-            </pre>
+            {!cliAvailable ? (
+              <p style={{ color: "#94a3b8", margin: 0 }}>No model data — OpenClaw CLI not available</p>
+            ) : models?.status ? (
+              <pre style={{ color: "#94a3b8", margin: 0, whiteSpace: "pre-wrap", maxHeight: 120, overflow: "auto" }}>
+                {typeof models.status === "object" ? JSON.stringify(models.status, null, 2) : String(models.status)}
+              </pre>
+            ) : (
+              <p style={{ color: "#94a3b8", margin: 0 }}>No model configured yet</p>
+            )}
           </div>
           {/* Set primary model */}
           <div style={{ display: "flex", gap: 8 }}>
