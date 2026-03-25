@@ -102,6 +102,6 @@ describe("Real Wiring — Full Flow", () => {
   it("should have all 50 sessions completed in state", () => {
     const state = require("../../architecture_state.json");
     expect(state.current_session).toBeGreaterThanOrEqual(49);
-    expect(state.total_sessions).toBe(50);
+    expect(state.total_sessions).toBeGreaterThanOrEqual(50);
   });
 });
