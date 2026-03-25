@@ -60,6 +60,13 @@
 | **S43 - Telegram Live** | ✅ Completed | telegram-commands + reject/report + live tests | — |
 | **S44 - Pipeline Wiring** | ✅ Completed | ServiceContainer DI + full 8-step pipeline tests | — |
 | **S45 - E2E & Polish** | ✅ Completed | 3 E2E flows + skeleton/error-boundary/empty-state | — |
+| | | | |
+| **--- SUPPLEMENTARY (Wire Real) ---** | | | |
+| **S46 - Engine Singleton** | ⬜ Not Started | Engine singleton + pipeline API route | — |
+| **S47 - Agent Wiring** | ⬜ Not Started | Deploy/chat via engine + pipeline | — |
+| **S48 - OpenClaw Config UI** | ⬜ Not Started | /settings/openclaw + connection test | — |
+| **S49 - Telegram Real** | ⬜ Not Started | grammY Bot + webhook + real startup | — |
+| **S50 - Env + Health + Final** | ⬜ Not Started | .env.example + full health + final E2E | — |
 
 ---
 
