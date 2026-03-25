@@ -4,7 +4,7 @@
 
 ---
 
-## Session Hiện Tại: Session 48 (OpenClaw Config UI)
+## Session Hiện Tại: Session 49 (Telegram Real)
 **Status**: ✅ Completed
 **Ngày**: 2026-03-25
 
@@ -65,7 +65,7 @@
 | **S46 - Engine Singleton** | ✅ Completed | engine-singleton + getEngine/getPipeline singletons | — |
 | **S47 - Agent Wiring** | ✅ Completed | /api/agents/[id]/chat + deploy/undeploy via singleton | — |
 | **S48 - OpenClaw Config UI** | ✅ Completed | /settings/openclaw + /api/openclaw/status | — |
-| **S49 - Telegram Real** | ⬜ Not Started | grammY Bot + webhook + real startup | — |
+| **S49 - Telegram Real** | ✅ Completed | telegram-startup + initTelegram + 7 commands | — |
 | **S50 - Env + Health + Final** | ⬜ Not Started | .env.example + full health + final E2E | — |
 
 ---
