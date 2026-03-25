@@ -25,6 +25,11 @@ const TelegramSettingsPage = dynamic(
   { loading: () => <div className="flex items-center justify-center py-12"><Loader2 className="w-6 h-6 text-indigo-400 animate-spin" /></div> }
 );
 
+const MultiTenantPage = dynamic(
+  () => import("./companies/page"),
+  { loading: () => <div className="flex items-center justify-center py-12"><Loader2 className="w-6 h-6 text-indigo-400 animate-spin" /></div> }
+);
+
 /** Department */
 interface DeptItem {
   id: string;
@@ -33,11 +38,12 @@ interface DeptItem {
   parentId: string | null;
 }
 
-type Tab = "company" | "departments" | "openclaw" | "telegram";
+type Tab = "company" | "departments" | "openclaw" | "telegram" | "companies";
 
 const TABS: { id: Tab; label: string; icon: React.ElementType }[] = [
   { id: "company", label: "Company", icon: Building2 },
   { id: "departments", label: "Departments", icon: Users },
+  { id: "companies", label: "Companies", icon: Building2 },
   { id: "openclaw", label: "OpenClaw", icon: Server },
   { id: "telegram", label: "Telegram", icon: Send },
 ];
@@ -128,6 +134,8 @@ export default function SettingsPage() {
         <OpenClawSettingsPage />
       ) : tab === "telegram" ? (
         <TelegramSettingsPage />
+      ) : tab === "companies" ? (
+        <MultiTenantPage />
       ) : null}
     </div>
   );
