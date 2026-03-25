@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { ActivityTimeline } from "./components/activity-timeline";
 import { ActivityTable } from "./components/activity-table";
+import { RealtimeFeed } from "./components/realtime-feed";
 import {
   Activity,
   Loader2,
@@ -10,6 +11,7 @@ import {
   Clock,
   Filter,
   Zap,
+  Radio,
 } from "lucide-react";
 
 /** Activity entry from API */
@@ -29,7 +31,7 @@ export default function ActivityPage() {
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
-  const [view, setView] = useState<"timeline" | "table">("timeline");
+  const [view, setView] = useState<"timeline" | "table" | "live">("timeline");
   const [eventFilter, setEventFilter] = useState("");
 
   /** Fetch activity logs */
@@ -108,6 +110,14 @@ export default function ActivityPage() {
             >
               <LayoutList className="w-3.5 h-3.5" />
             </button>
+            <button
+              onClick={() => setView("live")}
+              className={`px-3 py-2 text-xs font-medium transition-all ${
+                view === "live" ? "bg-cyan-500/20 text-cyan-400" : "text-gray-500 hover:text-white"
+              }`}
+            >
+              <Radio className="w-3.5 h-3.5" />
+            </button>
           </div>
         </div>
       </div>
@@ -150,6 +160,12 @@ export default function ActivityPage() {
           limit={20}
           onPageChange={fetchActivity}
         />
+      )}
+
+      {view === "live" && (
+        <div className="p-6 rounded-xl bg-[#111827] border border-[#1E2535]">
+          <RealtimeFeed />
+        </div>
       )}
     </div>
   );

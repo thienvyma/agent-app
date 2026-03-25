@@ -80,7 +80,7 @@
 | **S55 - Telegram Config** | ✅ Completed | Settings tab: token, start/stop, status, commands | — |
 | **S56 - Pipeline Viewer** | ✅ Completed | Agent Detail: 7-step execution viewer + Pipeline tab | — |
 | **S57 - Multi-Tenant** | ✅ Completed | Companies tab (TDD: 12 tests) + CRUD UI | — |
-| **S58 - Realtime SSE** | 🟡 In Progress | SSE endpoint + live dashboard widget | — |
+| **S58 - Realtime SSE** | ✅ Completed | SSE endpoint + RealtimeFeed + Activity Live toggle (TDD: 11 tests) | — |
 
 ---
 

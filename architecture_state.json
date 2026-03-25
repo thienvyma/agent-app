@@ -74,7 +74,7 @@
     "phase-55-telegram-config-ui":   { "status": "completed",  "sessions": [55] },
     "phase-56-pipeline-viewer":      { "status": "completed",  "sessions": [56] },
     "phase-57-multi-tenant-ui":      { "status": "completed",  "sessions": [57] },
-    "phase-58-realtime-sse":         { "status": "in_progress",  "sessions": [58] }
+    "phase-58-realtime-sse":         { "status": "completed",  "sessions": [58] }
   },
   "modules": {
     "foundation":        { "status": "completed",    "session": 0 },
