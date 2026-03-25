@@ -4,7 +4,7 @@
 
 ---
 
-## Session Hiện Tại: Session 45 (E2E & Polish — FINAL)
+## Session Hiện Tại: Session 46 (Engine Singleton)
 **Status**: ✅ Completed
 **Ngày**: 2026-03-25
 
@@ -62,7 +62,7 @@
 | **S45 - E2E & Polish** | ✅ Completed | 3 E2E flows + skeleton/error-boundary/empty-state | — |
 | | | | |
 | **--- SUPPLEMENTARY (Wire Real) ---** | | | |
-| **S46 - Engine Singleton** | ⬜ Not Started | Engine singleton + pipeline API route | — |
+| **S46 - Engine Singleton** | ✅ Completed | engine-singleton + getEngine/getPipeline singletons | — |
 | **S47 - Agent Wiring** | ⬜ Not Started | Deploy/chat via engine + pipeline | — |
 | **S48 - OpenClaw Config UI** | ⬜ Not Started | /settings/openclaw + connection test | — |
 | **S49 - Telegram Real** | ⬜ Not Started | grammY Bot + webhook + real startup | — |
