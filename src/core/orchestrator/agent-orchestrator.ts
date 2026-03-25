@@ -3,23 +3,58 @@
  *
  * Bridge between DB (Phase 5-6) and engine (Phase 3-4).
  * Agents go from "data in DB" to "running on OpenClaw".
+ * Message execution goes through AgentPipeline (Integration Session).
  *
  * @module core/orchestrator/agent-orchestrator
  */
 
 import type { PrismaClient } from "@prisma/client";
 import type { IAgentEngine } from "@/core/adapter/i-agent-engine";
-import type { AgentStatus } from "@/types/agent";
+import type { AgentStatus, AgentResponse } from "@/types/agent";
 import { AgentConfigBuilder } from "@/core/company/agent-config-builder";
+import type { AgentPipeline, PipelineResponse } from "@/core/orchestrator/agent-pipeline";
 
 /**
  * Orchestrates agent lifecycle: deploy, undeploy, redeploy, deployAll.
+ * Message execution delegated to AgentPipeline (Rule #14).
  */
 export class AgentOrchestrator {
+  private pipeline: AgentPipeline | null = null;
+
   constructor(
     private readonly engine: IAgentEngine,
     private readonly db: PrismaClient
   ) {}
+
+  /**
+   * Set the pipeline for message execution.
+   * MUST be called after construction to wire all middleware.
+   *
+   * @param pipeline - AgentPipeline instance
+   */
+  setPipeline(pipeline: AgentPipeline): void {
+    this.pipeline = pipeline;
+  }
+
+  /**
+   * Send a message to an agent via the full pipeline.
+   * Pipeline flow: context → engine → cost → budget → bus.
+   * Falls back to direct engine call if pipeline not set.
+   *
+   * @param agentId - Target agent ID
+   * @param message - Message content
+   * @returns Agent response (with budget status if pipeline active)
+   */
+  async sendMessage(
+    agentId: string,
+    message: string
+  ): Promise<AgentResponse | PipelineResponse> {
+    if (this.pipeline) {
+      return this.pipeline.execute(agentId, message);
+    }
+    // Fallback: direct engine call (no middleware)
+    return this.engine.sendMessage(agentId, message);
+  }
 
   /**
    * Deploy an agent: load from DB → build config → engine.deploy → update DB.
@@ -29,7 +64,6 @@ export class AgentOrchestrator {
    * @throws Error if agent not found
    */
   async deploy(agentId: string): Promise<AgentStatus> {
-    // 1. Load agent from DB
     const agent = await this.db.agent.findUnique({
       where: { id: agentId },
       include: { department: true, toolPermissions: true },
@@ -39,19 +73,14 @@ export class AgentOrchestrator {
       throw new Error(`Agent ${agentId} not found`);
     }
 
-    // 2. Build AgentConfig from DB record
     const config = AgentConfigBuilder.fromDBAgent(agent);
-
-    // 3. Deploy via engine
     const status = await this.engine.deploy(config);
 
-    // 4. Update DB status
     await this.db.agent.update({
       where: { id: agentId },
       data: { status: "RUNNING" },
     });
 
-    // 5. Audit log
     await this.db.auditLog.create({
       data: {
         agentId,
@@ -106,14 +135,13 @@ export class AgentOrchestrator {
   async deployAll(): Promise<void> {
     const agents = await this.db.agent.findMany({
       where: { isAlwaysOn: true },
-      orderBy: { role: "asc" }, // CEO comes first alphabetically
+      orderBy: { role: "asc" },
     });
 
     for (const agent of agents) {
       try {
         await this.deploy(agent.id);
       } catch (error) {
-        // Log but continue deploying others
         await this.db.auditLog.create({
           data: {
             agentId: agent.id,

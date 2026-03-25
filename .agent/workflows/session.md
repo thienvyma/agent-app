@@ -37,9 +37,11 @@ description: How to start and end a coding session for the agentic-enterprise pr
 ## Before Claiming "Done"
 
 1. Read `.agent/skills/verification-before-completion/SKILL.md`
-2. Run ALL tests → read output → confirm 0 failures
-3. Run CLI commands → confirm they work
-4. Only THEN claim completion with evidence
+2. Run ALL tests → read output → confirm 0 failures: `npx jest`
+3. Run TYPE CHECK → confirm 0 errors: `npx tsc --noEmit`
+4. Run CLI commands → confirm they work
+5. **PHẢI pass CẢ Jest VÀ tsc** mới được tuyên bố "Done"
+6. Only THEN claim completion with evidence
 
 ## ⭐ SPEC VERIFICATION (NEW — prevents missed items)
 
@@ -70,6 +72,7 @@ If a decision changed during the session (e.g., chose tool B instead of tool A):
 
 ## Ending a Session
 
+0. **GATE-CHECK: `npx tsc --noEmit` → 0 errors** (KHÔNG được bắt đầu Phase mới nếu tsc còn lỗi)
 1. **Run SPEC VERIFICATION (above)**
 2. **Run DOC CONSISTENCY CHECK (above)**
 3. Update `PROGRESS.md` (session log, bugs, next steps)

@@ -8,6 +8,7 @@
  */
 
 import type { PrismaClient } from "@prisma/client";
+import { Prisma } from "@prisma/client";
 
 /** Definition of a tool */
 export interface ToolDefinition {
@@ -115,11 +116,11 @@ export class ToolRegistry {
         action: "USE_TOOL",
         details: {
           toolName,
-          input,
-          output: result.data,
+          input: input as Prisma.InputJsonValue,
+          output: result.data as Prisma.InputJsonValue,
           success: result.success,
           ...(result.error ? { error: result.error } : {}),
-        },
+        } as Prisma.InputJsonValue,
       },
     });
 

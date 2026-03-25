@@ -12,6 +12,7 @@
 import { Command } from "commander";
 import { prisma } from "@/lib/prisma";
 import { formatOutput, OutputFormat } from "@/cli/utils/output";
+import type { TaskStatus } from "@prisma/client";
 
 export const taskCommand = new Command("task")
   .description("Manage tasks");
@@ -28,8 +29,6 @@ taskCommand
           description,
           status: "IN_PROGRESS",
           assignedToId: agentId,
-          createdById: agentId,
-          companyId: options.company ?? "default",
         },
       });
       console.log(formatOutput(
@@ -54,7 +53,7 @@ taskCommand
   .option("-f, --format <format>", "Output format", "json")
   .action(async (options: { status?: string; format: string }) => {
     try {
-      const where = options.status ? { status: options.status } : {};
+      const where = options.status ? { status: options.status as TaskStatus } : {};
       const tasks = await prisma.task.findMany({
         where,
         include: {
@@ -63,7 +62,7 @@ taskCommand
         orderBy: { createdAt: "desc" },
         take: 50,
       });
-      const data = tasks.map((t: { id: string; description: string; status: string; priority: number; retryCount: number; assignedTo: { name: string; role: string } | null }) => ({
+      const data = tasks.map((t) => ({
         id: t.id,
         description: t.description.substring(0, 60),
         status: t.status,

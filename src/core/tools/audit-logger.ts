@@ -8,6 +8,7 @@
  */
 
 import type { PrismaClient } from "@prisma/client";
+import { Prisma } from "@prisma/client";
 
 /** Supported audit actions */
 export type AuditAction =
@@ -50,7 +51,7 @@ export class AuditLogger {
       data: {
         agentId: entry.agentId,
         action: entry.action,
-        details: entry.details,
+        details: entry.details as Prisma.InputJsonValue,
       },
     });
   }
@@ -67,7 +68,7 @@ export class AuditLogger {
     if (filter.agentId) where.agentId = filter.agentId;
     if (filter.action) where.action = filter.action;
     if (filter.from || filter.to) {
-      where.createdAt = {
+      where.timestamp = {
         ...(filter.from ? { gte: filter.from } : {}),
         ...(filter.to ? { lte: filter.to } : {}),
       };
@@ -75,7 +76,7 @@ export class AuditLogger {
 
     return this.db.auditLog.findMany({
       where,
-      orderBy: { createdAt: "desc" },
+      orderBy: { timestamp: "desc" },
       take: 100,
     });
   }
@@ -89,7 +90,7 @@ export class AuditLogger {
   async getAgentActivity(agentId: string, limit: number = 20): Promise<unknown[]> {
     return this.db.auditLog.findMany({
       where: { agentId },
-      orderBy: { createdAt: "desc" },
+      orderBy: { timestamp: "desc" },
       take: limit,
     });
   }

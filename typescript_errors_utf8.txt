@@ -1,0 +1,57 @@
+﻿src/cli/commands/memory.ts(85,40): error TS2307: Cannot find module '@/lib/db' or its corresponding type declarations.
+src/cli/commands/task.ts(31,11): error TS2353: Object literal may only specify known properties, and 'createdById' does not exist in type 'Without<TaskCreateInput, TaskUncheckedCreateInput> & TaskUncheckedCreateInput'.
+src/cli/commands/task.ts(59,9): error TS2322: Type '{ status: string; } | { status?: undefined; }' is not assignable to type 'TaskWhereInput | undefined'.
+  Type '{ status: string; }' is not assignable to type 'TaskWhereInput'.
+    Types of property 'status' are incompatible.
+      Type 'string' is not assignable to type 'TaskStatus | EnumTaskStatusFilter<"Task"> | undefined'.
+src/cli/commands/task.ts(66,30): error TS2345: Argument of type '(t: { id: string; description: string; status: string; priority: number; retryCount: number; assignedTo: { name: string; role: string; } | null; }) => { id: string; description: string; status: string; priority: number; retryCount: number; agent: string; }' is not assignable to parameter of type '(value: { id: string; description: string; createdAt: Date; result: string | null; status: TaskStatus; priority: number; parentTaskId: string | null; assignedToId: string | null; errorLog: string | null; retryCount: number; tokenUsage: number; completedAt: Date | null; }, index: number, array: { ...; }[]) => { ...; }'.
+  Types of parameters 't' and 'value' are incompatible.
+    Property 'assignedTo' is missing in type '{ id: string; description: string; createdAt: Date; result: string | null; status: TaskStatus; priority: number; parentTaskId: string | null; assignedToId: string | null; errorLog: string | null; retryCount: number; tokenUsage: number; completedAt: Date | null; }' but required in type '{ id: string; description: string; status: string; priority: number; retryCount: number; assignedTo: { name: string; role: string; } | null; }'.
+src/core/company/company-manager.ts(71,9): error TS2322: Type 'Record<string, unknown>' is not assignable to type 'JsonNull | InputJsonValue | undefined'.
+  Type 'Record<string, unknown>' is missing the following properties from type 'readonly (InputJsonValue | null)[]': length, concat, join, slice, and 26 more.
+src/core/company/company-manager.ts(106,7): error TS2322: Type 'UpdateCompanyInput' is not assignable to type '(Without<CompanyUpdateInput, CompanyUncheckedUpdateInput> & CompanyUncheckedUpdateInput) | (Without<...> & CompanyUpdateInput)'.
+  Type 'UpdateCompanyInput' is not assignable to type 'Without<CompanyUncheckedUpdateInput, CompanyUpdateInput> & CompanyUpdateInput'.
+    Type 'UpdateCompanyInput' is not assignable to type 'CompanyUpdateInput'.
+      Types of property 'config' are incompatible.
+        Type 'Record<string, unknown> | undefined' is not assignable to type 'JsonNull | InputJsonValue | undefined'.
+          Type 'Record<string, unknown>' is not assignable to type 'JsonNull | InputJsonValue | undefined'.
+            Type 'Record<string, unknown>' is missing the following properties from type 'readonly (InputJsonValue | null)[]': length, concat, join, slice, and 26 more.
+src/core/memory/vector-store.ts(47,12): error TS2532: Object is possibly 'undefined'.
+src/core/tasks/error-recovery.ts(96,27): error TS2532: Object is possibly 'undefined'.
+src/core/tasks/error-recovery.ts(104,22): error TS2532: Object is possibly 'undefined'.
+src/core/tasks/task-decomposer.ts(84,9): error TS2353: Object literal may only specify known properties, and 'companyId' does not exist in type '(Without<TaskCreateInput, TaskUncheckedCreateInput> & TaskUncheckedCreateInput) | (Without<...> & TaskCreateInput)'.
+src/core/tasks/task-decomposer.ts(103,11): error TS2353: Object literal may only specify known properties, and 'companyId' does not exist in type 'Without<TaskCreateInput, TaskUncheckedCreateInput> & TaskUncheckedCreateInput'.
+src/core/tools/audit-logger.ts(53,9): error TS2322: Type 'Record<string, unknown>' is not assignable to type 'JsonNull | InputJsonValue'.
+  Type 'Record<string, unknown>' is missing the following properties from type 'readonly (InputJsonValue | null)[]': length, concat, join, slice, and 26 more.
+src/core/tools/audit-logger.ts(78,18): error TS2353: Object literal may only specify known properties, and 'createdAt' does not exist in type 'AuditLogOrderByWithRelationInput | AuditLogOrderByWithRelationInput[]'.
+src/core/tools/audit-logger.ts(92,18): error TS2353: Object literal may only specify known properties, and 'createdAt' does not exist in type 'AuditLogOrderByWithRelationInput | AuditLogOrderByWithRelationInput[]'.
+src/core/tools/tool-registry.ts(116,9): error TS2322: Type '{ error?: string | undefined; toolName: string; input: unknown; output: unknown; success: boolean; }' is not assignable to type 'JsonNull | InputJsonValue'.
+  Types of property 'input' are incompatible.
+    Type 'unknown' is not assignable to type 'InputJsonValue | null | undefined'.
+tests/company/company-manager.test.ts(45,7): error TS2532: Object is possibly 'undefined'.
+tests/company/company-manager.test.ts(45,7): error TS2532: Object is possibly 'undefined'.
+tests/company/company-manager.test.ts(53,14): error TS2532: Object is possibly 'undefined'.
+tests/company/company-manager.test.ts(70,7): error TS2532: Object is possibly 'undefined'.
+tests/company/company-manager.test.ts(70,7): error TS2532: Object is possibly 'undefined'.
+tests/company/company-manager.test.ts(75,14): error TS2532: Object is possibly 'undefined'.
+tests/company/company-manager.test.ts(83,7): error TS2532: Object is possibly 'undefined'.
+tests/company/company-manager.test.ts(83,7): error TS2532: Object is possibly 'undefined'.
+tests/company/company-manager.test.ts(91,7): error TS2532: Object is possibly 'undefined'.
+tests/company/company-manager.test.ts(91,7): error TS2532: Object is possibly 'undefined'.
+tests/company/company-manager.test.ts(105,7): error TS2532: Object is possibly 'undefined'.
+tests/company/company-manager.test.ts(105,7): error TS2532: Object is possibly 'undefined'.
+tests/company/company-manager.test.ts(122,7): error TS2532: Object is possibly 'undefined'.
+tests/company/company-manager.test.ts(122,7): error TS2532: Object is possibly 'undefined'.
+tests/company/company-manager.test.ts(128,7): error TS2532: Object is possibly 'undefined'.
+tests/company/company-manager.test.ts(128,7): error TS2532: Object is possibly 'undefined'.
+tests/company/company-manager.test.ts(129,7): error TS2532: Object is possibly 'undefined'.
+tests/company/company-manager.test.ts(129,7): error TS2532: Object is possibly 'undefined'.
+tests/company/company-manager.test.ts(132,14): error TS2532: Object is possibly 'undefined'.
+tests/company/company-manager.test.ts(149,7): error TS2532: Object is possibly 'undefined'.
+tests/company/company-manager.test.ts(149,7): error TS2532: Object is possibly 'undefined'.
+tests/company/company-manager.test.ts(172,7): error TS2532: Object is possibly 'undefined'.
+tests/company/company-manager.test.ts(172,7): error TS2532: Object is possibly 'undefined'.
+tests/company/company-manager.test.ts(184,7): error TS2532: Object is possibly 'undefined'.
+tests/company/company-manager.test.ts(184,7): error TS2532: Object is possibly 'undefined'.
+tests/memory/conversation-logger.test.ts(146,14): error TS2532: Object is possibly 'undefined'.
+tests/memory/vector-store.test.ts(128,14): error TS2532: Object is possibly 'undefined'.

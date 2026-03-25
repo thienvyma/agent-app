@@ -1,5 +1,7 @@
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
+import bcrypt from "bcryptjs";
+import { prisma } from "@/lib/prisma";
 
 /**
  * NextAuth.js v5 configuration for Agentic Enterprise.
@@ -14,58 +16,43 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     Credentials({
       name: "Credentials",
       credentials: {
-        email: {
-          label: "Email",
-          type: "email",
-          placeholder: "admin@agentic.local",
-        },
-        password: {
-          label: "Password",
-          type: "password",
-        },
+        email: { label: "Email", type: "email", placeholder: "admin@openclaw.dev" },
+        password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
-        // MVP: Single admin user from env vars
-        // TODO: Replace with DB lookup in Phase 5
-        const adminEmail = process.env.ADMIN_EMAIL ?? "admin@agentic.local";
-        const adminPassword = process.env.ADMIN_PASSWORD ?? "admin123";
+        if (!credentials?.email || !credentials?.password) return null;
 
-        if (
-          credentials?.email === adminEmail &&
-          credentials?.password === adminPassword
-        ) {
-          return {
-            id: "owner-1",
-            name: "Owner",
-            email: adminEmail,
-            role: "owner",
-          };
-        }
+        const user = await prisma.user.findUnique({
+          where: { email: credentials.email as string },
+        });
 
-        return null;
+        if (!user) return null;
+
+        const isPasswordValid = await bcrypt.compare(
+          credentials.password as string,
+          user.password
+        );
+
+        if (!isPasswordValid) return null;
+
+        return {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          role: user.role,
+        };
       },
     }),
   ],
-  session: {
-    strategy: "jwt",
-    maxAge: 30 * 24 * 60 * 60, // 30 days
-  },
-  pages: {
-    signIn: "/login",
-  },
+  session: { strategy: "jwt", maxAge: 30 * 24 * 60 * 60 },
+  pages: { signIn: "/login" },
   callbacks: {
-    /**
-     * Add custom fields to JWT token.
-     */
     async jwt({ token, user }) {
       if (user) {
         token.role = (user as { role?: string }).role ?? "viewer";
       }
       return token;
     },
-    /**
-     * Expose custom fields in client-side session.
-     */
     async session({ session, token }) {
       if (session.user) {
         (session.user as { role?: string }).role = token.role as string;

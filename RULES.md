@@ -84,7 +84,7 @@ Quy trình mỗi file:
 9. **KHÔNG xóa/sửa tests đang pass** để "fix" code — sửa CODE cho pass TEST
 10. **KHÔNG viết code TRƯỚC test** — TDD bắt buộc (Red → Green → Refactor)
 
-## ✅ BẮT BUỘC (10 điều phải làm)
+## ✅ BẮT BUỘC (13 điều phải làm)
 
 1. **Test trước, code sau** — viết test → chạy fail → viết code → pass → commit
 2. **Interface trước, implementation sau** — define contract rồi mới code
@@ -96,6 +96,10 @@ Quy trình mỗi file:
 8. **Mỗi session tối đa 6 files mới** — vượt → DỪNG LẠI và hỏi owner
 9. **Trình kế hoạch trước khi code** — owner phải xác nhận (Bước 2)
 10. **Verify trước khi kết thúc** — chạy tests, kiểm tra CLI, evidence > claims
+11. **Schema-First khi code DB** — ĐỌC `prisma/schema.prisma` TRƯỚC khi viết `db.*.create()/update()/findMany()`. Chỉ dùng ĐÚNG field đã khai báo trong model. KHÔNG tự tưởng tượng field.
+12. **Type-check bắt buộc** — `npx tsc --noEmit` phải 0 errors. Jest pass CHƯA ĐỦ (ts-jest bỏ qua type errors).
+13. **Cleanup trước khi commit** — Chạy `git status` hoặc kiểm tra file system trước khi kết thúc session. Xóa mọi file/thư mục rác tạo nhầm (ví dụ: path sai, typo tên thư mục). File rác gây IDE lint errors ảo và confuse developer.
+14. **Integration Verification bắt buộc** — Mỗi module MỚI PHẢI có ít nhất 1 integration point với pipeline hiện tại (`AgentPipeline`). Unit test standalone CHƯA ĐỦ — phải có test chứng minh module được CALLED từ pipeline thực tế. Module không wire = module không tồn tại. Kiểm tra: module có được import/sử dụng trong `AgentPipeline`, `AgentOrchestrator`, hoặc API routes không?
 
 ---
 
@@ -189,10 +193,10 @@ Trước khi nói "tests pass", "đã fix", "hoàn thành":
 
 | Claim | Cần có | KHÔNG đủ |
 |---|---|---|
-| "Tests pass" | Output: 0 failures | "Chắc là pass" |
+| "Tests pass" | `npx jest` → 0 failures **VÀ** `npx tsc --noEmit` → 0 errors | Chỉ Jest pass (ts-jest bỏ qua type errors) |
 | "Build OK" | Exit code 0 | "Linter pass rồi" |
 | "Bug fixed" | Test gốc pass | "Đã sửa code" |
-| "Session xong" | Checklist ✅ tất cả | "Nghĩ là xong" |
+| "Session xong" | Checklist ✅ tất cả + tsc 0 errors | "Nghĩ là xong" |
 
 **Red flags — DỪNG LẠI nếu đang dùng từ**: "chắc là", "có lẽ", "nên được", "hình như".
 
@@ -254,6 +258,13 @@ Khi AI muốn skip TDD, bảng này giúp nhận diện rationalization:
 - Async/await over raw Promises
 - Named exports over default exports
 - JSDoc trên mọi function
+- **`noUncheckedIndexedAccess` đang BẬT** — `array[0]` trả về `T | undefined`:
+  - Dùng non-null assertion `array[0]!` nếu CHẮC CHẮN có data (ví dụ: sau `if (array.length > 0)`)
+  - Hoặc optional chaining: `array[0]?.field`
+  - Hoặc guard: `const first = array[0]; if (first) { ... }`
+- **Prisma JSON fields** — khi truyền object vào field `Json`:
+  - Cast: `details as Prisma.InputJsonValue`
+  - KHÔNG truyền `Record<string, unknown>` trực tiếp (Prisma type mismatch)
 
 ### File & Folder Naming
 - Files: `kebab-case.ts` (e.g. `agent-orchestrator.ts`)
@@ -332,6 +343,7 @@ Scopes: foundation, scaffold, cli, adapter, company, orchestrator,
 □ Đã đọc SESSIONS.md → Session N
 □ Đã đọc docs/phases/phase-XX/README.md
 □ Đã đọc docs/INDEX.md → xem docs liên quan phase
+□ Đã đọc prisma/schema.prisma (nếu session có DB operations)
 □ Đã liệt kê files cần tạo (≤6)
 □ Đã liệt kê tests cần viết
 □ Đã liệt kê CLI commands cần thêm
@@ -359,7 +371,8 @@ Scopes: foundation, scaffold, cli, adapter, company, orchestrator,
 □ Verify: không còn tham chiếu cũ trong bất kỳ file nào
 
 === SAU KHI CODE ===
-□ Tất cả tests pass
+□ Tất cả tests pass (npx jest → 0 failures)
+□ Type-check pass (npx tsc --noEmit → 0 errors)
 □ CLI commands hoạt động
 □ Self-review: đúng spec? quality OK?
 □ Đã cập nhật PROGRESS.md

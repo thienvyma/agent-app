@@ -125,7 +125,7 @@ describe("VectorStore", () => {
       const results = await store.search([0.1, 0.2, 0.3], 5);
 
       expect(results).toHaveLength(2);
-      expect(results[0].score).toBe(0.95);
+      expect(results[0]!.score).toBe(0.95);
     });
   });
 

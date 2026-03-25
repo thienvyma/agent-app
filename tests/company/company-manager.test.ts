@@ -8,27 +8,37 @@ import { HierarchyEngine } from "@/core/company/hierarchy-engine";
 import { AgentConfigBuilder } from "@/core/company/agent-config-builder";
 import type { AgentConfig } from "@/types/agent";
 
-// Mock Prisma
-const mockPrisma = {
-  company: {
-    create: jest.fn(),
-    findUnique: jest.fn(),
-    update: jest.fn(),
-  },
-  department: {
-    create: jest.fn(),
-    findMany: jest.fn(),
-  },
-  agent: {
+// Typed mock for Prisma client
+interface MockModel {
+  create: jest.Mock;
+  findUnique: jest.Mock;
+  findMany: jest.Mock;
+  update: jest.Mock;
+  delete: jest.Mock;
+  count: jest.Mock;
+}
+
+function createMockModel(): MockModel {
+  return {
     create: jest.fn(),
     findUnique: jest.fn(),
     findMany: jest.fn(),
     update: jest.fn(),
     delete: jest.fn(),
-  },
-  task: {
     count: jest.fn(),
-  },
+  };
+}
+
+const mockCompany = createMockModel();
+const mockDepartment = createMockModel();
+const mockAgent = createMockModel();
+const mockTask = createMockModel();
+
+const mockPrisma = {
+  company: mockCompany,
+  department: mockDepartment,
+  agent: mockAgent,
+  task: mockTask,
 } as unknown;
 
 describe("CompanyManager", () => {
@@ -41,8 +51,8 @@ describe("CompanyManager", () => {
 
   describe("createCompany", () => {
     it("should create a company and return it", async () => {
-      const mockCompany = { id: "co-1", name: "Test Corp", config: {} };
-      (mockPrisma as Record<string, Record<string, jest.Mock>>).company.create.mockResolvedValue(mockCompany);
+      const mockResult = { id: "co-1", name: "Test Corp", config: {} };
+      mockCompany.create.mockResolvedValue(mockResult);
 
       const result = await manager.createCompany({
         name: "Test Corp",
@@ -50,7 +60,7 @@ describe("CompanyManager", () => {
       });
 
       expect(result.name).toBe("Test Corp");
-      expect((mockPrisma as Record<string, Record<string, jest.Mock>>).company.create).toHaveBeenCalledWith(
+      expect(mockCompany.create).toHaveBeenCalledWith(
         expect.objectContaining({
           data: expect.objectContaining({ name: "Test Corp" }),
         })
@@ -67,12 +77,12 @@ describe("CompanyManager", () => {
           { id: "dept-1", name: "Marketing", agents: [{ id: "a-1", name: "Marketing Manager" }] },
         ],
       };
-      (mockPrisma as Record<string, Record<string, jest.Mock>>).company.findUnique.mockResolvedValue(mockResult);
+      mockCompany.findUnique.mockResolvedValue(mockResult);
 
       const result = await manager.getCompany("co-1");
 
       expect(result?.name).toBe("My Enterprise");
-      expect((mockPrisma as Record<string, Record<string, jest.Mock>>).company.findUnique).toHaveBeenCalledWith(
+      expect(mockCompany.findUnique).toHaveBeenCalledWith(
         expect.objectContaining({
           include: expect.objectContaining({ departments: expect.anything() }),
         })
@@ -80,15 +90,15 @@ describe("CompanyManager", () => {
     });
 
     it("should throw if company not found", async () => {
-      (mockPrisma as Record<string, Record<string, jest.Mock>>).company.findUnique.mockResolvedValue(null);
+      mockCompany.findUnique.mockResolvedValue(null);
       await expect(manager.getCompany("non-existent")).rejects.toThrow(/not found/i);
     });
   });
 
   describe("createDepartment", () => {
     it("should create department under company", async () => {
-      const mockDept = { id: "dept-1", name: "Finance", companyId: "co-1" };
-      (mockPrisma as Record<string, Record<string, jest.Mock>>).department.create.mockResolvedValue(mockDept);
+      const mockResult = { id: "dept-1", name: "Finance", companyId: "co-1" };
+      mockDepartment.create.mockResolvedValue(mockResult);
 
       const result = await manager.createDepartment("co-1", { name: "Finance" });
       expect(result.name).toBe("Finance");
@@ -97,12 +107,12 @@ describe("CompanyManager", () => {
 
   describe("createAgent", () => {
     it("should create agent under department", async () => {
-      const mockAgent = {
+      const mockResult = {
         id: "a-1", name: "CEO Agent", role: "ceo",
         sop: "Manage everything", model: "qwen2.5:7b",
         tools: ["email"], skills: ["leadership"], status: "IDLE",
       };
-      (mockPrisma as Record<string, Record<string, jest.Mock>>).agent.create.mockResolvedValue(mockAgent);
+      mockAgent.create.mockResolvedValue(mockResult);
 
       const result = await manager.createAgent("dept-1", {
         name: "CEO Agent",
@@ -119,17 +129,16 @@ describe("CompanyManager", () => {
 
   describe("deleteAgent", () => {
     it("should throw error when agent has active tasks", async () => {
-      (mockPrisma as Record<string, Record<string, jest.Mock>>).task.count.mockResolvedValue(3);
-
+      mockTask.count.mockResolvedValue(3);
       await expect(manager.deleteAgent("a-1")).rejects.toThrow(/active tasks/i);
     });
 
     it("should delete agent when no active tasks", async () => {
-      (mockPrisma as Record<string, Record<string, jest.Mock>>).task.count.mockResolvedValue(0);
-      (mockPrisma as Record<string, Record<string, jest.Mock>>).agent.delete.mockResolvedValue({});
+      mockTask.count.mockResolvedValue(0);
+      mockAgent.delete.mockResolvedValue({});
 
       await manager.deleteAgent("a-1");
-      expect((mockPrisma as Record<string, Record<string, jest.Mock>>).agent.delete).toHaveBeenCalledWith(
+      expect(mockAgent.delete).toHaveBeenCalledWith(
         expect.objectContaining({ where: { id: "a-1" } })
       );
     });
@@ -146,7 +155,7 @@ describe("HierarchyEngine", () => {
 
   describe("getOrgTree", () => {
     it("should return nested org tree", async () => {
-      (mockPrisma as Record<string, Record<string, jest.Mock>>).company.findUnique.mockResolvedValue({
+      mockCompany.findUnique.mockResolvedValue({
         id: "co-1",
         name: "My Enterprise",
         departments: [
@@ -169,7 +178,7 @@ describe("HierarchyEngine", () => {
 
   describe("findAgentsByRole", () => {
     it("should find agents by role", async () => {
-      (mockPrisma as Record<string, Record<string, jest.Mock>>).agent.findMany.mockResolvedValue([
+      mockAgent.findMany.mockResolvedValue([
         { id: "a-1", name: "Marketing Manager", role: "marketing" },
       ]);
 
@@ -181,7 +190,7 @@ describe("HierarchyEngine", () => {
 
   describe("findBestAgent", () => {
     it("should match task to agent by skills/role keywords", async () => {
-      (mockPrisma as Record<string, Record<string, jest.Mock>>).agent.findMany.mockResolvedValue([
+      mockAgent.findMany.mockResolvedValue([
         { id: "a-ceo", name: "CEO Agent", role: "ceo", skills: ["leadership"], tools: [] },
         { id: "a-mkt", name: "Marketing Manager", role: "marketing", skills: ["content_writing", "social_media"], tools: ["facebook_api"] },
         { id: "a-fin", name: "Finance Analyst", role: "finance", skills: ["financial_analysis"], tools: ["quickbooks"] },

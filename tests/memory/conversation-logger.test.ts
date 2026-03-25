@@ -143,7 +143,7 @@ describe("DocumentIngester", () => {
 
       expect(chunks.length).toBeGreaterThan(1);
       // Each chunk should be approximately chunkSize words
-      expect(chunks[0].split(/\s+/).filter(Boolean).length).toBeLessThanOrEqual(35);
+      expect(chunks[0]!.split(/\s+/).filter(Boolean).length).toBeLessThanOrEqual(35);
     });
 
     it("should return single chunk for short text", () => {

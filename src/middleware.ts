@@ -12,14 +12,8 @@ import type { NextRequest } from "next/server";
  */
 
 /** Routes that don't require authentication */
-const PUBLIC_ROUTES = ["/login", "/api/auth"];
+const PUBLIC_ROUTES = ["/login", "/api/auth", "/api/health"];
 
-/**
- * Check if a path matches any public route prefix.
- *
- * @param pathname - Request pathname
- * @returns true if route is public
- */
 function isPublicRoute(pathname: string): boolean {
   return PUBLIC_ROUTES.some((route) => pathname.startsWith(route));
 }

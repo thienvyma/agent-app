@@ -11,6 +11,7 @@
  */
 
 import type { PrismaClient } from "@prisma/client";
+import { Prisma } from "@prisma/client";
 
 /** Recovery action taken */
 export enum RecoveryAction {
@@ -72,7 +73,7 @@ export class ErrorRecovery {
             recovery: RecoveryAction.RETRY,
             retryCount: currentRetry + 1,
             error: error.message,
-          },
+          } as Prisma.InputJsonValue,
         },
       });
 
@@ -90,10 +91,11 @@ export class ErrorRecovery {
       });
 
       if (alternates.length > 0) {
+        const alternate = alternates[0]!;
         await this.db.task.update({
           where: { id: task.id },
           data: {
-            assignedToId: alternates[0].id,
+            assignedToId: alternate.id,
             retryCount: 0, // Reset for new agent
             status: "PENDING",
           },
@@ -101,14 +103,14 @@ export class ErrorRecovery {
 
         await this.db.auditLog.create({
           data: {
-            agentId: alternates[0].id,
+            agentId: alternate.id,
             action: "ERROR",
             details: {
               taskId: task.id,
               recovery: RecoveryAction.REASSIGN,
               previousAgent: task.assignedToId,
               error: error.message,
-            },
+            } as Prisma.InputJsonValue,
           },
         });
 
@@ -131,7 +133,7 @@ export class ErrorRecovery {
           recovery: RecoveryAction.ESCALATE,
           reason: `Task failed after ${this.maxRetries} retries, no alternate agent`,
           error: error.message,
-        },
+        } as Prisma.InputJsonValue,
       },
     });
 
@@ -161,7 +163,7 @@ export class ErrorRecovery {
       data: {
         agentId: "system",
         action: "ESCALATION",
-        details: { taskId, reason },
+        details: { taskId, reason } as Prisma.InputJsonValue,
       },
     });
   }

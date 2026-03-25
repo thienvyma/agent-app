@@ -57,3 +57,30 @@ export interface TaskProgress {
   percentComplete: number;
   lastUpdate: Date;
 }
+
+// ================ Phase 12: Knowledge Engine ================
+
+/** LightRAG query modes for dual-level retrieval */
+export type LightRAGQueryMode = "naive" | "local" | "global" | "hybrid";
+
+/** Result from LightRAG graph-enhanced search */
+export interface LightRAGResult {
+  id: string;
+  content: string;
+  score: number;
+  metadata?: Record<string, unknown>;
+}
+
+/** Structured context built by ContextBuilder for system prompt injection */
+export interface TaskContext {
+  /** Agent SOP/role description */
+  agentSop: string;
+  /** Graph-enhanced knowledge from LightRAG */
+  knowledgeResults: LightRAGResult[];
+  /** Past conversations from VectorStore */
+  pastExperience: VectorResult[];
+  /** Learned rules from corrections */
+  corrections: VectorResult[];
+  /** Whether LightRAG was available */
+  lightragAvailable: boolean;
+}

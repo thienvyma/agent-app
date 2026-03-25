@@ -44,7 +44,7 @@ export class VectorStore {
       RETURNING id
     `;
 
-    return result[0].id;
+    return result[0]!.id;
   }
 
   /**

@@ -208,7 +208,7 @@ describe("AuditLogger", () => {
       expect(mockDb.auditLog.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
           take: 3,
-          orderBy: { createdAt: "desc" },
+          orderBy: { timestamp: "desc" },
         })
       );
     });

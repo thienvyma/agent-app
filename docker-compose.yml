@@ -1,12 +1,36 @@
+# docker-compose.yml — Agentic Enterprise Production Stack
+# Usage: docker compose up -d --build
+# Setup guide: docs/phases/phase-28-production-deploy/README.md
+
 services:
+  # === Core App (Next.js) ===
+  app:
+    build: .
+    container_name: ae-app
+    ports: ["3000:3000"]
+    env_file: .env
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: always
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # === Database (PostgreSQL + pgvector) ===
   postgres:
     image: pgvector/pgvector:pg16
     container_name: ae-postgres
     restart: unless-stopped
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: agentic
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
+      POSTGRES_DB: ${DB_NAME:-agentic}
     ports:
       - "5432:5432"
     volumes:
@@ -17,6 +41,7 @@ services:
       timeout: 5s
       retries: 5
 
+  # === Cache (Redis) ===
   redis:
     image: redis:7-alpine
     container_name: ae-redis
@@ -25,12 +50,70 @@ services:
       - "6379:6379"
     volumes:
       - redisdata:/data
+    command: redis-server --appendonly yes
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 5s
       timeout: 5s
       retries: 5
 
+  # === LightRAG (Vector Search) ===
+  lightrag:
+    build:
+      context: ./docker/lightrag
+    container_name: ae-lightrag
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: "postgresql://${DB_USER:-postgres}:${DB_PASSWORD:-postgres}@postgres:5432/${DB_NAME:-agentic}"
+      OLLAMA_URL: "${OLLAMA_URL:-http://ollama:11434}"
+    ports:
+      - "9621:9621"
+    volumes:
+      - lightragdata:/data
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9621/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  # === AI Engine (Ollama) ===
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ae-ollama
+    volumes:
+      - ollamadata:/root/.ollama
+    ports:
+      - "11434:11434"
+    restart: always
+    # Neu co GPU, uncomment khoi ben duoi:
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - capabilities: [gpu]
+
+  # === OpenClaw Gateway ===
+  openclaw:
+    image: node:20-alpine
+    container_name: ae-openclaw
+    working_dir: /app
+    volumes:
+      - ../openclaw:/app
+    command: sh -c "npm install --production 2>/dev/null; npm start"
+    ports:
+      - "18789:18789"
+    depends_on:
+      - ollama
+    environment:
+      OLLAMA_URL: http://ollama:11434
+    restart: always
+
 volumes:
   pgdata:
   redisdata:
+  lightragdata:
+  ollamadata:

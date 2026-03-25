@@ -1,194 +1,145 @@
 /**
- * Prisma seed script — populates database with sample company data.
- *
- * Creates:
- * - 1 Company: "My Enterprise"
- * - 3 Departments: Executive, Marketing, Finance
- * - 3 Agents: CEO (always-on), Marketing Manager, Finance Analyst
- * - Sample ToolPermissions for each agent
+ * Prisma seed script — creates sample data for development.
  *
  * Run: npx prisma db seed
- *
- * @module prisma/seed
+ * Or:  npx tsx prisma/seed.ts
  */
 
 import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
-async function main(): Promise<void> {
+async function main() {
   console.log("🌱 Seeding database...");
 
-  // 1. Create Company
+  // User (admin)
+  const passwordHash = require("bcryptjs").hashSync("admin123", 10);
+  const user = await prisma.user.upsert({
+    where: { email: "admin@openclaw.dev" },
+    update: {
+      password: passwordHash,
+    },
+    create: {
+      email: "admin@openclaw.dev",
+      password: passwordHash,
+      name: "Owner",
+      role: "owner",
+    },
+  });
+  console.log("  ✅ User:", user.email);
+
+  // Company
   const company = await prisma.company.upsert({
-    where: { id: "company-001" },
+    where: { id: "seed-company-1" },
     update: {},
     create: {
-      id: "company-001",
-      name: "My Enterprise",
+      id: "seed-company-1",
+      name: "OpenClaw Corp",
       description: "AI-powered autonomous business",
-      config: {
-        timezone: "Asia/Ho_Chi_Minh",
-        language: "vi",
-        maxAgents: 10,
-        budgetLimit: 100,
-      },
+      config: { industry: "Technology", size: "startup" },
     },
   });
-  console.log(`  ✅ Company: ${company.name}`);
+  console.log("  ✅ Company:", company.name);
 
-  // 2. Create Departments
-  const executive = await prisma.department.upsert({
-    where: { id: "dept-exec" },
-    update: {},
-    create: {
-      id: "dept-exec",
-      name: "Executive",
-      description: "Strategic leadership and oversight",
-      companyId: company.id,
-    },
+  // Departments
+  const executive = await prisma.department.create({
+    data: { name: "Executive", description: "C-suite leadership", companyId: company.id },
   });
-
-  const marketing = await prisma.department.upsert({
-    where: { id: "dept-marketing" },
-    update: {},
-    create: {
-      id: "dept-marketing",
-      name: "Marketing",
-      description: "Content creation, social media, campaigns",
-      companyId: company.id,
-    },
+  const marketing = await prisma.department.create({
+    data: { name: "Marketing", description: "Growth and content", companyId: company.id },
   });
-
-  const finance = await prisma.department.upsert({
-    where: { id: "dept-finance" },
-    update: {},
-    create: {
-      id: "dept-finance",
-      name: "Finance",
-      description: "Financial analysis, budgeting, reporting",
-      companyId: company.id,
-    },
+  const finance = await prisma.department.create({
+    data: { name: "Finance", description: "Budget and accounting", companyId: company.id },
   });
-  console.log(`  ✅ Departments: ${executive.name}, ${marketing.name}, ${finance.name}`);
+  const engineering = await prisma.department.create({
+    data: { name: "Engineering", description: "Product development", companyId: company.id },
+  });
+  console.log("  ✅ Departments: 4 created");
 
-  // 3. Create Agents
-  const ceo = await prisma.agent.upsert({
-    where: { id: "agent-ceo-001" },
-    update: {},
-    create: {
-      id: "agent-ceo-001",
+  // Agents
+  const ceo = await prisma.agent.create({
+    data: {
       name: "CEO Agent",
-      role: "ceo",
-      sop: `# CEO Standard Operating Procedure
-
-## Daily routine:
-1. Check all department reports
-2. Review pending tasks and approvals
-3. Assign new strategic tasks to departments
-4. Monitor budget usage
-
-## Decision rules:
-- Tasks > $50 budget: require owner approval
-- Agent errors > 3: pause and escalate
-- Revenue changes > 10%: alert owner via Telegram`,
+      role: "CEO",
+      sop: "You are the CEO. Delegate tasks, review results, make strategic decisions.",
       model: "qwen2.5:7b",
-      tools: ["google_sheets", "email", "calendar"],
-      skills: ["strategic_planning", "delegation", "reporting"],
-      isAlwaysOn: true,
-      cronSchedule: "*/5 * * * *",
+      tools: ["web_search", "sessions_spawn", "cron", "message"],
+      skills: ["strategy", "delegation", "review"],
       departmentId: executive.id,
     },
   });
-
-  const marketingManager = await prisma.agent.upsert({
-    where: { id: "agent-marketing-001" },
-    update: {},
-    create: {
-      id: "agent-marketing-001",
-      name: "Marketing Manager",
-      role: "marketing",
-      sop: `# Marketing Manager SOP
-
-## Responsibilities:
-1. Create social media content (Facebook, Instagram)
-2. Manage ad campaigns
-3. Track engagement metrics
-4. Report weekly to CEO
-
-## Content rules:
-- Brand voice: professional but friendly
-- Post frequency: 3x/week minimum
-- Always include call-to-action`,
+  const mkt = await prisma.agent.create({
+    data: {
+      name: "Marketing Agent",
+      role: "Marketing Manager",
+      sop: "You handle all marketing tasks: content, SEO, social media campaigns.",
       model: "qwen2.5:7b",
-      tools: ["facebook_api", "canva", "analytics"],
-      skills: ["content_writing", "social_media", "data_analysis"],
-      isAlwaysOn: false,
+      tools: ["web_search", "web_fetch", "image_generate"],
+      skills: ["content-writing", "seo", "social-media"],
       departmentId: marketing.id,
     },
   });
-
-  const financeAnalyst = await prisma.agent.upsert({
-    where: { id: "agent-finance-001" },
-    update: {},
-    create: {
-      id: "agent-finance-001",
-      name: "Finance Analyst",
-      role: "finance",
-      sop: `# Finance Analyst SOP
-
-## Responsibilities:
-1. Track daily revenue and expenses
-2. Generate financial reports
-3. Alert on budget anomalies
-4. Reconcile accounts weekly
-
-## Alert thresholds:
-- Daily spend > $20: notify CEO
-- Revenue drop > 15%: urgent alert
-- Missing transactions: escalate immediately`,
+  const fin = await prisma.agent.create({
+    data: {
+      name: "Finance Agent",
+      role: "CFO",
+      sop: "You handle financial tasks: budgets, ROI calculations, invoicing.",
       model: "qwen2.5:7b",
-      tools: ["google_sheets", "quickbooks", "calculator"],
-      skills: ["financial_analysis", "reporting", "data_analysis"],
-      isAlwaysOn: false,
+      tools: ["exec", "web_fetch"],
+      skills: ["accounting", "financial-analysis"],
       departmentId: finance.id,
     },
   });
-  console.log(`  ✅ Agents: ${ceo.name}, ${marketingManager.name}, ${financeAnalyst.name}`);
+  const dev = await prisma.agent.create({
+    data: {
+      name: "Developer Agent",
+      role: "Tech Lead",
+      sop: "You handle technical tasks: coding, deployment, debugging.",
+      model: "qwen2.5:7b",
+      tools: ["exec", "read", "write", "edit", "browser"],
+      skills: ["typescript", "devops", "debugging"],
+      departmentId: engineering.id,
+    },
+  });
+  console.log("  ✅ Agents: 4 created");
 
-  // 4. Create ToolPermissions
-  const toolPerms = [
-    { agentId: ceo.id, toolName: "google_sheets", grantedBy: "system" },
-    { agentId: ceo.id, toolName: "email", grantedBy: "system" },
-    { agentId: ceo.id, toolName: "calendar", grantedBy: "system" },
-    { agentId: marketingManager.id, toolName: "facebook_api", grantedBy: "system" },
-    { agentId: marketingManager.id, toolName: "canva", grantedBy: "system" },
-    { agentId: marketingManager.id, toolName: "analytics", grantedBy: "system" },
-    { agentId: financeAnalyst.id, toolName: "google_sheets", grantedBy: "system" },
-    { agentId: financeAnalyst.id, toolName: "quickbooks", grantedBy: "system" },
-    { agentId: financeAnalyst.id, toolName: "calculator", grantedBy: "system" },
-  ];
+  // Sample tasks
+  await prisma.task.createMany({
+    data: [
+      { description: "Lập kế hoạch marketing Q2", priority: 8, assignedToId: mkt.id, status: "COMPLETED" },
+      { description: "Tính ROI chiến dịch tháng 3", priority: 7, assignedToId: fin.id, status: "IN_PROGRESS" },
+      { description: "Review và approve báo giá", priority: 9, assignedToId: ceo.id, status: "WAITING_APPROVAL" },
+      { description: "Deploy hotfix auth module", priority: 10, assignedToId: dev.id, status: "COMPLETED" },
+      { description: "Viết nội dung blog về AI", priority: 5, assignedToId: mkt.id, status: "PENDING" },
+    ],
+  });
+  console.log("  ✅ Tasks: 5 created");
 
-  for (const perm of toolPerms) {
-    await prisma.toolPermission.upsert({
-      where: {
-        agentId_toolName: { agentId: perm.agentId, toolName: perm.toolName },
-      },
-      update: {},
-      create: perm,
-    });
-  }
-  console.log(`  ✅ ToolPermissions: ${toolPerms.length} permissions`);
+  // Budget
+  const today = new Date().toISOString().split("T")[0]!;
+  await prisma.budget.upsert({
+    where: { date: today },
+    update: {},
+    create: { dailyLimit: 100000, warningPct: 80, currentSpent: 0, date: today },
+  });
+  console.log("  ✅ Budget: daily limit set");
 
-  console.log("🎉 Seed completed!");
+  // Tenant
+  await prisma.tenant.upsert({
+    where: { slug: "openclaw" },
+    update: {},
+    create: { name: "OpenClaw Corp", slug: "openclaw", plan: "business", maxAgents: 15, maxTokensPerDay: 1000000, status: "active" },
+  });
+  console.log("  ✅ Tenant: openclaw created");
+
+  console.log("\n🎉 Seed complete!");
 }
 
 main()
-  .then(async () => {
-    await prisma.$disconnect();
-  })
-  .catch(async (e) => {
-    console.error("❌ Seed failed:", e);
-    await prisma.$disconnect();
+  .catch((e) => {
+    console.error("❌ Seed error:", e);
     process.exit(1);
+  })
+  .finally(async () => {
+    await prisma.$disconnect();
   });

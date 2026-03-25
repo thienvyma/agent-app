@@ -7,6 +7,7 @@
  */
 
 import type { PrismaClient } from "@prisma/client";
+import { Prisma } from "@prisma/client";
 import type { IAgentEngine } from "@/core/adapter/i-agent-engine";
 import type { HierarchyEngine } from "@/core/company/hierarchy-engine";
 
@@ -81,8 +82,6 @@ Task: ${taskDescription}`;
       data: {
         description: taskDescription,
         status: "PENDING",
-        companyId,
-        createdById: ceoAgentId,
       },
     });
 
@@ -92,7 +91,7 @@ Task: ${taskDescription}`;
     for (const def of subTaskDefs) {
       // Find agent by role
       const agents = await this.hierarchy.findAgentsByRole(companyId, def.role);
-      const agent = agents.length > 0 ? agents[0] : null;
+      const agent = agents.length > 0 ? agents[0]! : null;
 
       const subTask = await this.db.task.create({
         data: {
@@ -100,8 +99,6 @@ Task: ${taskDescription}`;
           status: "PENDING",
           priority: def.priority,
           parentTaskId: parentTask.id,
-          companyId,
-          createdById: ceoAgentId,
           assignedToId: agent?.id ?? null,
         },
       });
@@ -125,7 +122,7 @@ Task: ${taskDescription}`;
           type: "decomposition",
           parentTaskId: parentTask.id,
           subTaskCount: subTasks.length,
-        },
+        } as Prisma.InputJsonValue,
       },
     });
 

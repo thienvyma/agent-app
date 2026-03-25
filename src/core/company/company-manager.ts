@@ -7,7 +7,7 @@
  * @module core/company/company-manager
  */
 
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient, Prisma } from "@prisma/client";
 
 /** Input for creating a company */
 export interface CreateCompanyInput {
@@ -68,7 +68,7 @@ export class CompanyManager {
       data: {
         name: data.name,
         description: data.description,
-        config: data.config ?? {},
+        config: (data.config ?? {}) as Prisma.InputJsonValue,
       },
     });
   }
@@ -103,7 +103,10 @@ export class CompanyManager {
   async updateCompany(id: string, data: UpdateCompanyInput) {
     return this.db.company.update({
       where: { id },
-      data,
+      data: {
+        ...data,
+        config: data.config !== undefined ? (data.config as Prisma.InputJsonValue) : undefined,
+      },
     });
   }
 

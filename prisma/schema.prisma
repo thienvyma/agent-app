@@ -1,6 +1,6 @@
 // Prisma Schema — Agentic Enterprise
-// 9 tables, 4 enums, full relationships
-// Phase 5 (Session 5) — Foundation for 21 subsequent sessions
+// 16 tables, 4 enums, full relationships
+// Phase 5 (Session 5) → Extended in Session 31 for full integration
 
 generator client {
   provider = "prisma-client-js"
@@ -47,7 +47,22 @@ enum ApprovalStatus {
   MODIFIED
 }
 
-// ================ TABLES ================
+// ================ AUTH (S33) ================
+
+/// User — owner/admin authentication
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  name      String
+  role      String   @default("owner")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("users")
+}
+
+// ================ COMPANY (S5-S6) ================
 
 /// Company — top-level organization entity
 model Company {
@@ -79,6 +94,8 @@ model Department {
   @@map("departments")
 }
 
+// ================ AGENT (S5-S7) ================
+
 /// Agent — AI employee with SOP, model, tools, and skills
 model Agent {
   id           String      @id @default(uuid())
@@ -99,9 +116,28 @@ model Agent {
   auditLogs        AuditLog[]
   sentMessages     Message[]        @relation("MessageFrom")
   receivedMessages Message[]        @relation("MessageTo")
+  costEntries      CostEntry[]
+  sessions         AgentSession[]
+  conversations    Conversation[]
 
   @@map("agents")
 }
+
+/// AgentSession — tracks OpenClaw sessions (S7)
+model AgentSession {
+  id         String    @id @default(uuid())
+  agentId    String
+  sessionKey String    @unique
+  status     String    @default("active")
+  startedAt  DateTime  @default(now())
+  endedAt    DateTime?
+
+  agent Agent @relation(fields: [agentId], references: [id], onDelete: Cascade)
+
+  @@map("agent_sessions")
+}
+
+// ================ TASK (S9, S15) ================
 
 /// Task — work item assigned to an agent
 model Task {
@@ -127,6 +163,54 @@ model Task {
   @@map("tasks")
 }
 
+/// ApprovalRequest — HITL approval workflow (S15)
+model ApprovalRequest {
+  id            String         @id @default(uuid())
+  taskId        String         @unique
+  status        ApprovalStatus @default(PENDING)
+  policy        String
+  reason        String
+  ownerResponse String?
+  telegramMsgId String?
+  createdAt     DateTime       @default(now())
+  resolvedAt    DateTime?
+
+  task Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  @@map("approval_requests")
+}
+
+// ================ MEMORY (S10-S12) ================
+
+/// Conversation — chat session between user and agent
+model Conversation {
+  id        String        @id @default(uuid())
+  agentId   String
+  summary   String?
+  createdAt DateTime      @default(now())
+
+  agent    Agent          @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  messages ChatMessage[]
+
+  @@map("conversations")
+}
+
+/// ChatMessage — individual message in a conversation
+model ChatMessage {
+  id             String       @id @default(uuid())
+  conversationId String
+  role           String
+  content        String       @db.Text
+  tokens         Int?
+  createdAt      DateTime     @default(now())
+
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@map("chat_messages")
+}
+
+// ================ COMMUNICATION (S13-S14) ================
+
 /// Message — inter-agent communication
 model Message {
   id          String      @id @default(uuid())
@@ -143,35 +227,47 @@ model Message {
   @@map("messages")
 }
 
-/// CorrectionLog — owner corrections for self-learning (Phase 26)
-model CorrectionLog {
-  id            String   @id @default(uuid())
-  taskId        String   @unique
-  agentId       String
-  context       String   @db.Text
-  wrongOutput   String   @db.Text
-  correction    String   @db.Text
-  ruleExtracted String   @db.Text
-  vectorId      String?
-  createdAt     DateTime @default(now())
+/// Trigger — event triggers for automation (S14)
+model Trigger {
+  id        String   @id @default(uuid())
+  name      String
+  type      String
+  config    Json
+  enabled   Boolean  @default(true)
+  createdAt DateTime @default(now())
 
-  task Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
-
-  @@map("correction_logs")
+  @@map("triggers")
 }
 
-/// AuditLog — tracks all agent actions
-model AuditLog {
+// ================ COST (S17-S18) ================
+
+/// CostEntry — token usage per agent per request
+model CostEntry {
   id        String   @id @default(uuid())
   agentId   String
-  action    String
-  details   Json
-  timestamp DateTime @default(now())
+  tokens    Int
+  costUsd   Float
+  model     String
+  taskDesc  String?
+  createdAt DateTime @default(now())
 
   agent Agent @relation(fields: [agentId], references: [id], onDelete: Cascade)
 
-  @@map("audit_logs")
+  @@map("cost_entries")
 }
+
+/// Budget — daily budget limits
+model Budget {
+  id           String @id @default(uuid())
+  dailyLimit   Float
+  warningPct   Int    @default(80)
+  currentSpent Float  @default(0)
+  date         String @unique
+
+  @@map("budgets")
+}
+
+// ================ TOOLS (S8) ================
 
 /// ToolPermission — controls which tools each agent can use
 model ToolPermission {
@@ -188,19 +284,78 @@ model ToolPermission {
   @@map("tool_permissions")
 }
 
-/// ApprovalRequest — HITL approval workflow (Phase 15)
-model ApprovalRequest {
-  id            String         @id @default(uuid())
-  taskId        String         @unique
-  status        ApprovalStatus @default(PENDING)
-  policy        String
-  reason        String
-  ownerResponse String?
-  telegramMsgId String?
-  createdAt     DateTime       @default(now())
-  resolvedAt    DateTime?
+// ================ AUDIT & LEARNING (S19, S26) ================
+
+/// AuditLog — tracks all agent actions
+model AuditLog {
+  id        String   @id @default(uuid())
+  agentId   String
+  action    String
+  details   Json
+  timestamp DateTime @default(now())
+
+  agent Agent @relation(fields: [agentId], references: [id], onDelete: Cascade)
+
+  @@map("audit_logs")
+}
+
+/// CorrectionLog — owner corrections for self-learning (S26)
+model CorrectionLog {
+  id            String   @id @default(uuid())
+  taskId        String   @unique
+  agentId       String
+  context       String   @db.Text
+  wrongOutput   String   @db.Text
+  correction    String   @db.Text
+  ruleExtracted String   @db.Text
+  vectorId      String?
+  createdAt     DateTime @default(now())
 
   task Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
 
-  @@map("approval_requests")
+  @@map("correction_logs")
 }
+
+/// ActivityLog — realtime system events (S19)
+model ActivityLog {
+  id        String   @id @default(uuid())
+  event     String
+  data      Json?
+  source    String?
+  createdAt DateTime @default(now())
+
+  @@map("activity_logs")
+}
+
+// ================ SCHEDULING (S29) ================
+
+/// ScheduledJob — cron jobs for agents
+model ScheduledJob {
+  id             String    @id @default(uuid())
+  name           String
+  cronExpression String
+  agentId        String
+  taskTemplate   String    @db.Text
+  enabled        Boolean   @default(true)
+  lastRun        DateTime?
+  createdAt      DateTime  @default(now())
+
+  @@map("scheduled_jobs")
+}
+
+// ================ TENANT (S30) ================
+
+/// Tenant — multi-tenant support
+model Tenant {
+  id              String   @id @default(uuid())
+  name            String
+  slug            String   @unique
+  plan            String   @default("trial")
+  maxAgents       Int      @default(2)
+  maxTokensPerDay Int      @default(10000)
+  status          String   @default("trial")
+  createdAt       DateTime @default(now())
+
+  @@map("tenants")
+}
+
