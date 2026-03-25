@@ -50,6 +50,7 @@ export async function POST(
     return NextResponse.json(
       apiResponse({
         agentId: result.agentId,
+        response: result.message,
         message: result.message,
         tokenUsed: result.tokenUsed,
         budgetStatus: result.budgetStatus,

@@ -10,6 +10,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { apiResponse, apiError, handleApiError } from "@/lib/api-auth";
+import { getEngine } from "@/lib/engine-singleton";
 import type { AgentStatus } from "@prisma/client";
 
 /**
@@ -101,7 +102,34 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    return NextResponse.json(apiResponse(agent), { status: 201 });
+    // Wire to engine: deploy agent after DB save
+    let engineStatus = "not_deployed";
+    try {
+      const engine = await getEngine();
+      const deployResult = await engine.deploy({
+        id: agent.id,
+        name: agent.name,
+        role: agent.role,
+        sop: agent.sop,
+        model: agent.model,
+        tools: agent.tools as string[],
+        skills: agent.skills as string[],
+        isAlwaysOn: agent.isAlwaysOn,
+      });
+      engineStatus = deployResult.status;
+
+      // Update DB status to match engine
+      await prisma.agent.update({
+        where: { id: agent.id },
+        data: { status: "RUNNING" },
+      });
+    } catch (deployErr) {
+      console.warn("[POST /api/agents] engine.deploy() failed:", deployErr);
+      // Agent saved to DB but not deployed — user can retry
+      engineStatus = "deploy_failed";
+    }
+
+    return NextResponse.json(apiResponse({ ...agent, engineStatus }), { status: 201 });
   } catch (error) {
     const { status, body } = handleApiError(error);
     return NextResponse.json(body, { status });
