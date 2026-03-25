@@ -145,7 +145,7 @@ describe("Final Integration — Full Cycle (S53)", () => {
 
   it("should verify all 53 sessions tracked", () => {
     const state = require("../../architecture_state.json");
-    expect(state.total_sessions).toBe(53);
+    expect(state.total_sessions).toBeGreaterThanOrEqual(53);
     expect(state.current_session).toBeGreaterThanOrEqual(52);
   });
 });

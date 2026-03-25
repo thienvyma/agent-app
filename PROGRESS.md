@@ -4,8 +4,8 @@
 
 ---
 
-## Session Hiện Tại: Session 54 (OpenClaw CLI Wrapper)
-**Status**: ✅ Completed
+## Session Hiện Tại: Session 55 (Telegram Config UI)
+**Status**: 🟡 In Progress
 **Ngày**: 2026-03-25
 
 ## Tổng Quan
@@ -75,7 +75,12 @@
 | | | | |
 | **--- OPENCLAW WRAPPER (S54-S55) ---** | | | |
 | **S54 - CLI Wrapper** | ✅ Completed | openclaw-cli.ts + 6 API routes + settings UI 5 sections | — |
-| **S55 - Settings Polish** | ⬜ Not Started | Browser test + polish | — |
+| | | | |
+| **--- MISSING UI FIX (S55-S58) ---** | | | |
+| **S55 - Telegram Config** | ✅ Completed | Settings tab: token, start/stop, status, commands | — |
+| **S56 - Pipeline Viewer** | 🟡 In Progress | Agent Detail: 8-step execution display | — |
+| **S57 - Multi-Tenant** | ⬜ Not Started | Company CRUD: create/switch tenants | — |
+| **S58 - Realtime SSE** | ⬜ Not Started | SSE endpoint + live dashboard widget | — |
 
 ---
 
