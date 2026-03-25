@@ -31,6 +31,8 @@ export interface BotDependencies {
   getCostReport: () => { totalTokens: number; totalCostUSD: number; perAgent: { agentId: string; totalTokens: number; estimatedCostUSD: number }[] };
   sendTask: (description: string) => Promise<string>;
   getPendingApprovals: () => Promise<{ approvalId: string; taskDescription: string; agentName: string; reason: string }[]>;
+  rejectApproval: (approvalId: string) => Promise<string>;
+  getDailyReport: () => Promise<{ date: string; tasksCompleted: number; tasksFailed: number; totalTokens: number; totalCostUSD: number; topAgent: string }>;
 }
 
 /** Command handler result */
@@ -148,6 +150,57 @@ export class TelegramBot {
     try {
       const report = this.deps.getCostReport();
       const text = this.deps.notificationService.formatCostReport(report);
+      return { text, success: true };
+    } catch (error) {
+      return {
+        text: `❌ Lỗi: ${error instanceof Error ? error.message : "Unknown"}`,
+        success: false,
+      };
+    }
+  }
+
+  /**
+   * Handle /reject command.
+   *
+   * @param approvalId - Approval ID to reject
+   * @returns Rejection confirmation
+   */
+  async handleReject(approvalId: string): Promise<CommandResult> {
+    if (!approvalId.trim()) {
+      return { text: "❌ Cần approval ID. Ví dụ: /reject ap-123", success: false };
+    }
+
+    try {
+      const result = await this.deps.rejectApproval(approvalId.trim());
+      return {
+        text: `✅ Đã từ chối approval ${approvalId}.\n📝 ${result}`,
+        success: true,
+      };
+    } catch (error) {
+      return {
+        text: `❌ Lỗi: ${error instanceof Error ? error.message : "Unknown"}`,
+        success: false,
+      };
+    }
+  }
+
+  /**
+   * Handle /report command.
+   *
+   * @returns Daily report summary
+   */
+  async handleReport(): Promise<CommandResult> {
+    try {
+      const data = await this.deps.getDailyReport();
+      const text = [
+        `📊 *Báo cáo ngày ${data.date}*`,
+        "",
+        `✅ Tasks hoàn thành: ${data.tasksCompleted}`,
+        `❌ Tasks thất bại: ${data.tasksFailed}`,
+        `💰 Tổng tokens: ${data.totalTokens.toLocaleString()}`,
+        `💵 Chi phí: $${data.totalCostUSD.toFixed(3)}`,
+        `🏆 Agent nổi bật: ${data.topAgent}`,
+      ].join("\n");
       return { text, success: true };
     } catch (error) {
       return {

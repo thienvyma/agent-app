@@ -4,7 +4,7 @@
 
 ---
 
-## Session Hiện Tại: Session 42 (OpenClaw Live)
+## Session Hiện Tại: Session 43 (Telegram Live)
 **Status**: ✅ Completed
 **Ngày**: 2026-03-25
 
@@ -57,7 +57,7 @@
 | **S40 - Settings & Scheduling** | ✅ Completed | /settings + /scheduling cron + departments API | — |
 | **S41 - Realtime Integration** | ✅ Completed | SSE hook + toasts + notification bell | — |
 | **S42 - OpenClaw Live** | ✅ Completed | AdapterFactory fallback + USE_MOCK_ADAPTER + live tests | — |
-| **S43 - Telegram Live** | ⬜ Not Started | Real bot + commands + alerts | — |
+| **S43 - Telegram Live** | ✅ Completed | telegram-commands + reject/report + live tests | — |
 | **S44 - Pipeline Wiring** | ⬜ Not Started | Full 8-step pipeline with real services | — |
 | **S45 - E2E & Polish** | ⬜ Not Started | E2E tests + UI polish + performance | — |
 
@@ -829,5 +829,26 @@ DailyReport (BUILD) → summary → Telegram
 ### Bước Tiếp Theo:
 → **Session 43: Telegram Live** — Real bot + commands + alerts
 → Xem chi tiết: `docs/phases/phase-43-telegram-live/README.md`
+
+---
+
+## Session 43: Telegram Live ✅
+
+### Đã làm:
+1. `tests/integration/telegram-live.test.ts` — 18 TDD tests (Red → Green)
+2. `src/core/channels/telegram-commands.ts` — command router (parseCommand + routeCommand + help)
+3. `src/core/channels/telegram-bot.ts` — thêm handleReject + handleReport + expanded BotDependencies
+4. `tests/e2e/e2e-helpers.ts` — fix: thêm rejectApproval + getDailyReport cho BotDependencies
+
+### Verification:
+- ✅ `npx tsc --noEmit` → 0 errors
+- ✅ `npx jest` → 600/600 pass (40 suites)
+- ✅ TDD: Red (6 tests FAIL) → Green (18/18 pass)
+
+### Lỗi Tồn Đọng: Không có
+
+### Bước Tiếp Theo:
+→ **Session 44: Pipeline Wiring** — Full 8-step pipeline with real services
+→ Xem chi tiết: `docs/phases/phase-44-pipeline-wiring/README.md`
 
 ---

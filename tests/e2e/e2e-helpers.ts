@@ -152,6 +152,15 @@ export function createTestTelegramBot() {
       agentName: "Marketing",
       reason: "customer-facing",
     }],
+    rejectApproval: async (id: string) => `Rejected ${id}`,
+    getDailyReport: async () => ({
+      date: new Date().toISOString().split("T")[0]!,
+      tasksCompleted: 5,
+      tasksFailed: 1,
+      totalTokens: 1500,
+      totalCostUSD: 0.0075,
+      topAgent: "CEO",
+    }),
   });
 
   return { bot, notificationService, sentMessages };
