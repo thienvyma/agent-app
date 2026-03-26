@@ -99,6 +99,46 @@ function Panel({ title, icon: Icon, iconColor, children, defaultOpen = true }: {
 }
 
 /**
+ * Registered providers list — fetches from /api/openclaw/providers.
+ */
+function RegisteredProviders() {
+  const [providers, setProviders] = useState<Array<{ name: string; baseUrl?: string }>>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch("/api/openclaw/providers")
+      .then((r) => r.json())
+      .then((json) => setProviders(json.data ?? []))
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, []);
+
+  if (loading) return <div style={{ padding: 12 }}><Loader2 size={16} className="animate-spin" style={{ color: "#818cf8" }} /></div>;
+  if (providers.length === 0) return (
+    <div style={{ padding: 12, background: "rgba(239,68,68,0.06)", border: "1px solid rgba(239,68,68,0.15)", borderRadius: 10, fontSize: 13, color: "#f87171" }}>
+      <AlertTriangle size={14} style={{ display: "inline", marginRight: 6 }} />
+      No providers registered — agents cannot use cloud models. Add a provider below.
+    </div>
+  );
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+      <span style={{ fontSize: 12, color: "#64748b", fontWeight: 600, textTransform: "uppercase" }}>Registered Providers</span>
+      {providers.map((p) => (
+        <div key={p.name} style={{
+          display: "flex", alignItems: "center", gap: 10, padding: "8px 12px",
+          background: "#0B0F19", borderRadius: 8, border: "1px solid #1E2535",
+        }}>
+          <CheckCircle2 size={14} style={{ color: "#4ade80", flexShrink: 0 }} />
+          <span style={{ fontSize: 13, fontWeight: 600, color: "#e2e8f0", minWidth: 100 }}>{p.name}</span>
+          <span style={{ fontSize: 12, color: "#64748b", fontFamily: "monospace" }}>{p.baseUrl ?? ""}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/**
  * OpenClaw Settings Page — full configuration UI.
  *
  * Uses indirect CLI commands via API routes.
@@ -339,57 +379,83 @@ export default function OpenClawSettingsPage() {
         />
       </Panel>
 
-      {/* ═══ 4. Provider Auth ═══ */}
-      <Panel title="Provider Authentication" icon={Key} iconColor="#f59e0b" defaultOpen={false}>
-        <div style={{ display: "flex", flexDirection: "column", gap: 12, paddingTop: 16 }}>
-          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-            <select
-              value={authProvider}
-              onChange={(e) => setAuthProvider(e.target.value)}
-              style={{
-                padding: "8px 12px", borderRadius: 8, fontSize: 13,
-                background: "#0B0F19", border: "1px solid #1E2535", color: "#e2e8f0",
-              }}
-            >
-              <option value="anthropic">Anthropic</option>
-              <option value="openai">OpenAI</option>
-              <option value="openrouter">OpenRouter</option>
-              <option value="google">Google</option>
-              <option value="ollama-lan">Ollama LAN</option>
-            </select>
-            <input
-              value={authApiKey}
-              onChange={(e) => setAuthApiKey(e.target.value)}
-              placeholder="API Key (e.g. sk-ant-...)"
-              type="password"
-              style={{
-                flex: 1, minWidth: 200, padding: "8px 12px", borderRadius: 8, fontSize: 13,
-                background: "#0B0F19", border: "1px solid #1E2535", color: "#e2e8f0",
-                outline: "none", fontFamily: "monospace",
-              }}
-            />
-          </div>
-          <div style={{ display: "flex", gap: 8 }}>
-            <input
-              value={authBaseUrl}
-              onChange={(e) => setAuthBaseUrl(e.target.value)}
-              placeholder="Base URL (optional, e.g. http://192.168.1.35:8080/v1)"
-              style={{
-                flex: 1, padding: "8px 12px", borderRadius: 8, fontSize: 13,
-                background: "#0B0F19", border: "1px solid #1E2535", color: "#e2e8f0",
-                outline: "none", fontFamily: "monospace",
-              }}
-            />
-            <ActionBtn label="Save Auth" icon={Shield} variant="primary"
-              loading={actionLoading === "set-auth"}
-              onClick={() => {
-                if (!authApiKey.trim() && !authBaseUrl.trim()) return;
-                doAction("set-auth", "/api/openclaw/auth", {
-                  method: "POST", headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({ provider: authProvider, apiKey: authApiKey, baseUrl: authBaseUrl }),
-                });
-                setAuthApiKey("");
-              }} />
+      {/* ═══ 4. Provider Registration ═══ */}
+      <Panel title="AI Providers" icon={Key} iconColor="#f59e0b" defaultOpen={true}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 16, paddingTop: 16 }}>
+          {/* Registered providers list */}
+          <RegisteredProviders />
+
+          {/* Add new provider form */}
+          <div style={{ padding: 16, background: "#0B0F19", borderRadius: 12, border: "1px solid #1E2535" }}>
+            <h3 style={{ fontSize: 14, fontWeight: 600, color: "#e2e8f0", margin: "0 0 12px" }}>Add / Update Provider</h3>
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              <div style={{ display: "flex", gap: 8 }}>
+                <select
+                  value={authProvider}
+                  onChange={(e) => {
+                    setAuthProvider(e.target.value);
+                    const presets: Record<string, { url: string; hint: string }> = {
+                      gemini: { url: "https://generativelanguage.googleapis.com/v1beta/openai", hint: "AIza..." },
+                      openai: { url: "https://api.openai.com/v1", hint: "sk-..." },
+                      openrouter: { url: "https://openrouter.ai/api/v1", hint: "sk-or-..." },
+                      "ollama-lan": { url: "http://192.168.1.35:8080/v1", hint: "sk-local" },
+                      ollama: { url: "http://localhost:11434/v1", hint: "sk-local" },
+                    };
+                    const p = presets[e.target.value];
+                    if (p) { setAuthBaseUrl(p.url); setAuthApiKey(p.hint === "sk-local" ? "sk-local" : ""); }
+                  }}
+                  style={{
+                    padding: "8px 12px", borderRadius: 8, fontSize: 13,
+                    background: "#111827", border: "1px solid #1E2535", color: "#e2e8f0", minWidth: 140,
+                  }}
+                >
+                  <option value="gemini">Gemini (Google)</option>
+                  <option value="openai">OpenAI</option>
+                  <option value="openrouter">OpenRouter</option>
+                  <option value="ollama-lan">Ollama LAN</option>
+                  <option value="ollama">Ollama Local</option>
+                </select>
+                <input
+                  value={authBaseUrl}
+                  onChange={(e) => setAuthBaseUrl(e.target.value)}
+                  placeholder="Base URL"
+                  style={{
+                    flex: 1, padding: "8px 12px", borderRadius: 8, fontSize: 13,
+                    background: "#111827", border: "1px solid #1E2535", color: "#e2e8f0",
+                    outline: "none", fontFamily: "monospace",
+                  }}
+                />
+              </div>
+              <div style={{ display: "flex", gap: 8 }}>
+                <input
+                  value={authApiKey}
+                  onChange={(e) => setAuthApiKey(e.target.value)}
+                  placeholder="API Key"
+                  type="password"
+                  style={{
+                    flex: 1, padding: "8px 12px", borderRadius: 8, fontSize: 13,
+                    background: "#111827", border: "1px solid #1E2535", color: "#e2e8f0",
+                    outline: "none", fontFamily: "monospace",
+                  }}
+                />
+                <ActionBtn label="Register Provider" icon={Shield} variant="primary"
+                  loading={actionLoading === "register-provider"}
+                  onClick={async () => {
+                    if (!authApiKey.trim() || !authBaseUrl.trim()) return;
+                    setActionLoading("register-provider");
+                    try {
+                      const res = await fetch("/api/openclaw/providers", {
+                        method: "POST", headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ name: authProvider, baseUrl: authBaseUrl, apiKey: authApiKey }),
+                      });
+                      const json = await res.json();
+                      log("register-provider", `${authProvider}: ${json.data?.registered ? "registered" : json.error?.message ?? "failed"}`, res.ok);
+                      if (res.ok) { setAuthApiKey(""); await fetchAll(); }
+                    } catch (err) { log("register-provider", String(err), false); }
+                    finally { setActionLoading(null); }
+                  }} />
+              </div>
+            </div>
           </div>
         </div>
       </Panel>
