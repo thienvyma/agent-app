@@ -59,10 +59,18 @@ export function AgentChat({ agentId, agentName }: AgentChatProps) {
       });
 
       const data = await res.json();
+
+      // Extract error message safely (data.error can be object {code, message} or string)
+      const errorText = data.error
+        ? typeof data.error === "string"
+          ? data.error
+          : data.error.message ?? JSON.stringify(data.error)
+        : null;
+
       const assistantMsg: ChatMessage = {
         id: `assistant-${Date.now()}`,
         role: "assistant",
-        content: data.data?.response ?? data.error ?? "No response received.",
+        content: data.data?.response ?? data.data?.message ?? errorText ?? "No response received.",
         timestamp: new Date(),
       };
       setMessages((prev) => [...prev, assistantMsg]);
