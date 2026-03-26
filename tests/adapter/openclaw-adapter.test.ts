@@ -23,6 +23,7 @@ jest.mock("@/lib/openclaw-cli", () => ({
     stderr: "",
     exitCode: 0,
   }),
+  configSet: jest.fn().mockResolvedValue(undefined),
 }));
 
 const mockExecOpenClaw = execOpenClaw as jest.MockedFunction<typeof execOpenClaw>;
@@ -100,7 +101,7 @@ describe("OpenClawAdapter", () => {
       await adapter.deploy(config);
 
       expect(mockExecOpenClaw).toHaveBeenCalledWith(
-        expect.arrayContaining(["agents", "add", "ceo"]),
+        expect.arrayContaining(["agents", "add", "ceo-agent"]),
         expect.any(Number)
       );
     });
@@ -141,9 +142,9 @@ describe("OpenClawAdapter", () => {
       );
     });
 
-    // Phase 67: undeploy calls openclaw agents delete
+    // Phase 67: undeploy calls openclaw agents delete with slug
     it("calls openclaw agents delete when undeploying", async () => {
-      const config = makeConfig({ id: "ceo" });
+      const config = makeConfig({ id: "ceo", name: "CEO" });
       await adapter.deploy(config);
       mockExecOpenClaw.mockClear(); // clear deploy calls
       await adapter.undeploy("ceo");

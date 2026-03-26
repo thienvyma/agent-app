@@ -13,11 +13,15 @@
  * @module core/adapter/openclaw-adapter
  */
 
-import type { AgentConfig, AgentStatus, AgentResponse } from "@/types/agent";
+import type {
+  AgentConfig,
+  AgentStatus,
+  AgentResponse,
+} from "@/types/agent";
 import type { IAgentEngine } from "./i-agent-engine";
 import { OpenClawClient } from "./openclaw-client";
 import type { ChatMessage } from "./openclaw-client";
-import { execOpenClaw } from "@/lib/openclaw-cli";
+import { execOpenClaw, configSet } from "@/lib/openclaw-cli";
 
 /** Internal agent registration entry */
 interface AgentRegistration {
@@ -27,14 +31,35 @@ interface AgentRegistration {
 }
 
 /**
+ * Convert agent name to OpenClaw-friendly slug.
+ *
+ * "Marketing Agent" → "marketing-agent"
+ * "CEO" → "ceo"
+ *
+ * @param name - Human-readable agent name
+ * @returns lowercase slug with hyphens
+ */
+function toSlug(name: string): string {
+  return name
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "") || "agent";
+}
+
+/**
  * OpenClaw Gateway adapter implementing IAgentEngine.
  *
  * Manages agent registrations via OpenClaw CLI (agents add/delete)
  * with in-memory Map as cache. Chat is routed to per-agent sessions.
+ *
+ * @implements AgentAdapter
  */
 export class OpenClawAdapter implements IAgentEngine {
-  /** Agent ID → registration data (cache) */
-  private agents: Map<string, AgentRegistration> = new Map();
+  /** In-memory cache of deployed agents (slug → config+meta) */
+  private agents = new Map<
+    string,
+    { config: AgentConfig; slug: string; deployedAt: Date; tokenUsage: number }
+  >();
 
   /**
    * Create adapter with an OpenClaw HTTP client.
@@ -46,8 +71,9 @@ export class OpenClawAdapter implements IAgentEngine {
   /**
    * Deploy agent by registering in OpenClaw and internal cache.
    *
-   * Calls `openclaw agents add <id>` to register natively.
-   * Falls back to cache-only if CLI call fails.
+   * Uses slug name (e.g., "marketing-agent") instead of UUID
+   * for human-readable OpenClaw agent IDs.
+   * Also syncs model config to OpenClaw after registration.
    *
    * @param config - Agent configuration
    * @returns AgentStatus with RUNNING state
@@ -58,17 +84,29 @@ export class OpenClawAdapter implements IAgentEngine {
       throw new Error(`Agent ${config.id} is already deployed`);
     }
 
+    const slug = toSlug(config.name);
+
     // Register in OpenClaw via CLI (best-effort)
     try {
-      await execOpenClaw(["agents", "add", config.id], 5_000);
+      await execOpenClaw(["agents", "add", slug], 5_000);
     } catch {
       // CLI failed — fallback to in-memory cache only
-      console.warn(`[OpenClawAdapter] CLI agents add failed for ${config.id}, using cache-only`);
+      console.warn(`[OpenClawAdapter] CLI agents add failed for ${slug}, using cache-only`);
     }
 
-    // Register in cache
+    // Sync model to OpenClaw config (best-effort)
+    if (config.model) {
+      try {
+        await configSet(`agents.list.${slug}.model`, config.model);
+      } catch {
+        console.warn(`[OpenClawAdapter] model sync failed for ${slug}`);
+      }
+    }
+
+    // Register in cache with slug mapping
     this.agents.set(config.id, {
       config,
+      slug,
       deployedAt: new Date(),
       tokenUsage: 0,
     });
@@ -85,19 +123,20 @@ export class OpenClawAdapter implements IAgentEngine {
   /**
    * Undeploy agent by removing from OpenClaw and internal cache.
    *
-   * Calls `openclaw agents delete <id>` to deregister natively.
+   * Uses slug name for OpenClaw deregistration.
    *
    * @param agentId - Agent to undeploy
    * @throws Error if agent not found
    */
   async undeploy(agentId: string): Promise<void> {
-    if (!this.agents.has(agentId)) {
+    const entry = this.agents.get(agentId);
+    if (!entry) {
       throw new Error(`Agent ${agentId} not found`);
     }
 
     // Remove from OpenClaw via CLI (best-effort)
     try {
-      await execOpenClaw(["agents", "delete", agentId], 5_000);
+      await execOpenClaw(["agents", "delete", entry.slug], 5_000);
     } catch {
       console.warn(`[OpenClawAdapter] CLI agents delete failed for ${agentId}`);
     }
