@@ -8,10 +8,9 @@
  * - Clean separation of concerns (D1)
  *
  * Implementations:
- * - MockAdapter (Phase 3) — for testing
- * - OpenClawAdapter (Phase 4) — wraps OpenClaw Gateway API
+ * - MockAdapter (Phase 3) — in-memory mock for testing
+ * - OpenClawAdapter (Phase 4, rewritten Phase 61) — CLI for management, HTTP /v1/chat/completions for chat
  *
- * @see docs/openclaw-integration.md Section 8 (Gateway API endpoints)
  * @see DECISIONS.md D1: Engine — use OpenClaw via HTTP, not embedded
  *
  * @module core/adapter/i-agent-engine
@@ -22,7 +21,7 @@ import { AgentConfig, AgentStatus, AgentResponse } from "@/types/agent";
 export interface IAgentEngine {
   /**
    * Deploy a new agent with the given configuration.
-   * Maps to: POST /api/sessions + POST /api/agents in OpenClaw.
+   * Registers agent in internal tracking and prepares for messaging.
    *
    * @param config - Agent configuration
    * @returns Current status after deployment
@@ -32,7 +31,6 @@ export interface IAgentEngine {
 
   /**
    * Remove a deployed agent and free resources.
-   * Maps to: DELETE /api/sessions/:key in OpenClaw.
    *
    * @param agentId - ID of the agent to undeploy
    * @throws Error if agent not found
@@ -51,7 +49,7 @@ export interface IAgentEngine {
 
   /**
    * Send a message to an agent and get a response.
-   * Maps to: POST /api/sessions/:key/chat in OpenClaw.
+   * Builds system prompt from agent SOP + context, sends via engine.
    *
    * @param agentId - ID of the target agent
    * @param message - User/system message content
@@ -67,7 +65,6 @@ export interface IAgentEngine {
 
   /**
    * Get the current status of a deployed agent.
-   * Maps to: GET /api/sessions/:key in OpenClaw.
    *
    * @param agentId - ID of the agent
    * @returns Current agent status
@@ -77,7 +74,6 @@ export interface IAgentEngine {
 
   /**
    * List all currently deployed agents and their statuses.
-   * Maps to: GET /api/sessions in OpenClaw.
    *
    * @returns Array of all agent statuses
    */
@@ -85,7 +81,8 @@ export interface IAgentEngine {
 
   /**
    * Check if the engine is healthy and responsive.
-   * Maps to: GET /api/status in OpenClaw.
+   * OpenClawAdapter: pings /v1/models via HTTP.
+   * MockAdapter: always returns true.
    *
    * @returns true if engine is operational
    */

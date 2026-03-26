@@ -56,7 +56,7 @@ export interface ServiceContainer {
 export function createServiceContainer(config: ContainerConfig = {}): ServiceContainer {
   const { useMock = true, blockedPatterns = [], openclawUrl } = config;
 
-  // 1. Engine (IAgentEngine)
+  // 1. Engine (IAgentEngine) — OpenClawAdapter: internal Map + /v1/chat/completions
   const engine: IAgentEngine = useMock
     ? new MockAdapter()
     : new OpenClawAdapter(new OpenClawClient(openclawUrl));

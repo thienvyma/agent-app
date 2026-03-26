@@ -1,199 +1,292 @@
 /**
- * Tests for OpenClawAdapter and AdapterFactory.
- * Uses jest mocking for HTTP calls — no real OpenClaw needed.
+ * OpenClawAdapter — unit tests for IAgentEngine implementation.
+ *
+ * Tests deploy/undeploy/redeploy/sendMessage/getStatus/listAgents/healthCheck.
+ * Phase 67: per-agent session routing tests.
+ * Mocks OpenClawClient (chatCompletion + healthCheck) + openclaw-cli (execOpenClaw).
+ *
+ * @module tests/adapter/openclaw-adapter
  */
 
 import { OpenClawAdapter } from "@/core/adapter/openclaw-adapter";
 import { OpenClawClient } from "@/core/adapter/openclaw-client";
-import { AdapterFactory } from "@/core/adapter/adapter-factory";
-import { MockAdapter } from "@/core/adapter/mock-adapter";
 import type { AgentConfig } from "@/types/agent";
+import { execOpenClaw } from "@/lib/openclaw-cli";
 
-// Mock the OpenClawClient methods
+// Mock OpenClawClient
 jest.mock("@/core/adapter/openclaw-client");
 
-const MockedClient = OpenClawClient as jest.MockedClass<typeof OpenClawClient>;
+// Mock openclaw-cli for CLI calls
+jest.mock("@/lib/openclaw-cli", () => ({
+  execOpenClaw: jest.fn().mockResolvedValue({
+    stdout: "",
+    stderr: "",
+    exitCode: 0,
+  }),
+}));
+
+const mockExecOpenClaw = execOpenClaw as jest.MockedFunction<typeof execOpenClaw>;
+
+/** Test agent config factory */
+function makeConfig(overrides: Partial<AgentConfig> = {}): AgentConfig {
+  return {
+    id: "agent-001",
+    name: "Test Agent",
+    role: "tester",
+    sop: "You are a test agent. Follow instructions precisely.",
+    model: "ollama-lan/Qwen3.5-35B-A3B-Coder",
+    tools: ["search"],
+    skills: ["coding"],
+    isAlwaysOn: false,
+    ...overrides,
+  };
+}
 
 describe("OpenClawAdapter", () => {
   let adapter: OpenClawAdapter;
   let mockClient: jest.Mocked<OpenClawClient>;
-  let testConfig: AgentConfig;
 
   beforeEach(() => {
     jest.clearAllMocks();
-    mockClient = new MockedClient("http://localhost:18789") as jest.Mocked<OpenClawClient>;
+    mockClient = new OpenClawClient() as jest.Mocked<OpenClawClient>;
+    mockClient.chatCompletion = jest.fn();
+    mockClient.healthCheck = jest.fn();
     adapter = new OpenClawAdapter(mockClient);
-
-    testConfig = {
-      id: "agent-sales-001",
-      name: "Sales Agent",
-      role: "sales",
-      sop: "Handle customer inquiries and close deals",
-      model: "qwen2.5:7b",
-      tools: ["email", "crm"],
-      skills: ["negotiation"],
-      isAlwaysOn: true,
-    };
   });
+
+  // ── healthCheck ──
+
+  describe("healthCheck", () => {
+    it("delegates to client.healthCheck and returns true", async () => {
+      mockClient.healthCheck.mockResolvedValue(true);
+      const result = await adapter.healthCheck();
+      expect(result).toBe(true);
+      expect(mockClient.healthCheck).toHaveBeenCalledTimes(1);
+    });
+
+    it("delegates to client.healthCheck and returns false", async () => {
+      mockClient.healthCheck.mockResolvedValue(false);
+      const result = await adapter.healthCheck();
+      expect(result).toBe(false);
+    });
+  });
+
+  // ── deploy ──
 
   describe("deploy", () => {
-    it("should POST to /api/sessions and return RUNNING status", async () => {
-      mockClient.post.mockResolvedValue({
-        key: "session-abc123",
-        status: "active",
+    it("stores agent in internal map and returns RUNNING status", async () => {
+      const config = makeConfig();
+      const status = await adapter.deploy(config);
+
+      expect(status.id).toBe("agent-001");
+      expect(status.name).toBe("Test Agent");
+      expect(status.status).toBe("RUNNING");
+      expect(status.tokenUsage).toBe(0);
+      expect(status.lastActivity).toBeInstanceOf(Date);
+    });
+
+    it("throws if agent already deployed", async () => {
+      const config = makeConfig();
+      await adapter.deploy(config);
+
+      await expect(adapter.deploy(config)).rejects.toThrow(
+        /already deployed/i
+      );
+    });
+
+    // Phase 67: deploy calls openclaw agents add
+    it("calls openclaw agents add when deploying", async () => {
+      const config = makeConfig({ id: "ceo", name: "CEO Agent" });
+      await adapter.deploy(config);
+
+      expect(mockExecOpenClaw).toHaveBeenCalledWith(
+        expect.arrayContaining(["agents", "add", "ceo"]),
+        expect.any(Number)
+      );
+    });
+
+    // Phase 67: deploy still works when CLI fails (fallback)
+    it("deploys successfully even when openclaw agents add fails", async () => {
+      mockExecOpenClaw.mockResolvedValueOnce({
+        stdout: "",
+        stderr: "connection refused",
+        exitCode: 1,
       });
 
-      const status = await adapter.deploy(testConfig);
+      const config = makeConfig({ id: "ceo", name: "CEO Agent" });
+      const status = await adapter.deploy(config);
 
-      expect(mockClient.post).toHaveBeenCalledWith(
-        "/api/sessions",
-        expect.objectContaining({ agent_id: "agent-sales-001" })
-      );
-      expect(status.id).toBe("agent-sales-001");
       expect(status.status).toBe("RUNNING");
-      expect(status.name).toBe("Sales Agent");
+      expect(status.id).toBe("ceo");
     });
   });
+
+  // ── undeploy ──
 
   describe("undeploy", () => {
-    it("should DELETE the session mapped to the agent", async () => {
-      // Deploy first to create session mapping
-      mockClient.post.mockResolvedValue({ key: "session-abc123" });
-      await adapter.deploy(testConfig);
+    it("removes agent from internal map", async () => {
+      const config = makeConfig();
+      await adapter.deploy(config);
+      await adapter.undeploy("agent-001");
 
-      mockClient.delete.mockResolvedValue(undefined);
-      await adapter.undeploy("agent-sales-001");
-
-      expect(mockClient.delete).toHaveBeenCalledWith(
-        "/api/sessions/session-abc123"
+      // Agent should no longer exist
+      await expect(adapter.getStatus("agent-001")).rejects.toThrow(
+        /not found/i
       );
     });
 
-    it("should throw if agent not deployed", async () => {
-      await expect(adapter.undeploy("unknown")).rejects.toThrow(/not found/i);
+    it("throws if agent not found", async () => {
+      await expect(adapter.undeploy("unknown")).rejects.toThrow(
+        /not found/i
+      );
+    });
+
+    // Phase 67: undeploy calls openclaw agents delete
+    it("calls openclaw agents delete when undeploying", async () => {
+      const config = makeConfig({ id: "ceo" });
+      await adapter.deploy(config);
+      mockExecOpenClaw.mockClear(); // clear deploy calls
+      await adapter.undeploy("ceo");
+
+      expect(mockExecOpenClaw).toHaveBeenCalledWith(
+        expect.arrayContaining(["agents", "delete", "ceo"]),
+        expect.any(Number)
+      );
     });
   });
 
-  describe("sendMessage", () => {
-    it("should POST to /api/sessions/:key/chat and return AgentResponse", async () => {
-      // Deploy first
-      mockClient.post.mockResolvedValueOnce({ key: "session-abc123" });
-      await adapter.deploy(testConfig);
+  // ── redeploy ──
 
-      // Chat
-      mockClient.post.mockResolvedValueOnce({
-        response: "I will contact the customer now.",
-        token_usage: 150,
+  describe("redeploy", () => {
+    it("undeploys and redeploys with merged config", async () => {
+      const config = makeConfig();
+      await adapter.deploy(config);
+
+      const status = await adapter.redeploy("agent-001", {
+        model: "new-model",
       });
 
-      const response = await adapter.sendMessage(
-        "agent-sales-001",
-        "Contact customer John"
-      );
-
-      expect(mockClient.post).toHaveBeenLastCalledWith(
-        "/api/sessions/session-abc123/chat",
-        expect.objectContaining({ message: "Contact customer John" })
-      );
-      expect(response.agentId).toBe("agent-sales-001");
-      expect(response.message).toBe("I will contact the customer now.");
-      expect(response.tokenUsed).toBe(150);
-      expect(response.timestamp).toBeInstanceOf(Date);
+      expect(status.status).toBe("RUNNING");
+      expect(status.id).toBe("agent-001");
     });
 
-    it("should throw if agent not deployed", async () => {
+    it("throws if agent not found", async () => {
+      await expect(adapter.redeploy("unknown")).rejects.toThrow(
+        /not found/i
+      );
+    });
+  });
+
+  // ── sendMessage ──
+
+  describe("sendMessage", () => {
+    it("builds system prompt from SOP and calls chatCompletion", async () => {
+      const config = makeConfig({ sop: "You are a helpful assistant." });
+      await adapter.deploy(config);
+
+      mockClient.chatCompletion.mockResolvedValue({
+        message: "Hello!",
+        tokenUsed: 25,
+      });
+
+      const response = await adapter.sendMessage("agent-001", "hi");
+
+      expect(response.agentId).toBe("agent-001");
+      expect(response.message).toBe("Hello!");
+      expect(response.tokenUsed).toBe(25);
+      expect(response.timestamp).toBeInstanceOf(Date);
+
+      // Verify system prompt contains SOP
+      const callArgs = mockClient.chatCompletion.mock.calls[0]!;
+      const request = callArgs[0];
+      expect(request.messages).toHaveLength(2); // system + user
+      expect(request.messages[0]!.role).toBe("system");
+      expect(request.messages[0]!.content).toContain(
+        "You are a helpful assistant."
+      );
+      expect(request.messages[1]!.role).toBe("user");
+      expect(request.messages[1]!.content).toBe("hi");
+    });
+
+    it("includes context in system prompt when provided", async () => {
+      const config = makeConfig();
+      await adapter.deploy(config);
+
+      mockClient.chatCompletion.mockResolvedValue({
+        message: "context response",
+        tokenUsed: 30,
+      });
+
+      await adapter.sendMessage(
+        "agent-001",
+        "question",
+        "Relevant company data: Q1 revenue = $1M"
+      );
+
+      const callArgs = mockClient.chatCompletion.mock.calls[0]!;
+      const systemMsg = callArgs[0].messages[0]!.content;
+      expect(systemMsg).toContain("Q1 revenue");
+    });
+
+    it("throws if agent not found", async () => {
       await expect(
         adapter.sendMessage("unknown", "hello")
       ).rejects.toThrow(/not found/i);
     });
-  });
 
-  describe("getStatus", () => {
-    it("should GET session details and return AgentStatus", async () => {
-      mockClient.post.mockResolvedValue({ key: "session-abc123" });
-      await adapter.deploy(testConfig);
+    // Phase 67: sendMessage routes to per-agent session
+    it("passes per-agent session key to chatCompletion", async () => {
+      const config = makeConfig({ id: "ceo" });
+      await adapter.deploy(config);
 
-      mockClient.get.mockResolvedValue({
-        key: "session-abc123",
-        status: "active",
+      mockClient.chatCompletion.mockResolvedValue({
+        message: "CEO response",
+        tokenUsed: 50,
       });
 
-      const status = await adapter.getStatus("agent-sales-001");
+      await adapter.sendMessage("ceo", "hello CEO");
 
-      expect(mockClient.get).toHaveBeenCalledWith(
-        "/api/sessions/session-abc123"
-      );
-      expect(status.id).toBe("agent-sales-001");
-      expect(status.status).toBe("RUNNING");
+      const callArgs = mockClient.chatCompletion.mock.calls[0]!;
+      // Second param should be the session key (agent:ceo:main)
+      expect(callArgs[1]).toBe("agent:ceo:main");
     });
   });
 
+  // ── getStatus ──
+
+  describe("getStatus", () => {
+    it("returns status from internal map", async () => {
+      const config = makeConfig();
+      await adapter.deploy(config);
+
+      const status = await adapter.getStatus("agent-001");
+      expect(status.id).toBe("agent-001");
+      expect(status.name).toBe("Test Agent");
+      expect(status.status).toBe("RUNNING");
+    });
+
+    it("throws if agent not found", async () => {
+      await expect(adapter.getStatus("unknown")).rejects.toThrow(
+        /not found/i
+      );
+    });
+  });
+
+  // ── listAgents ──
+
   describe("listAgents", () => {
-    it("should return all deployed agent statuses", async () => {
-      mockClient.post
-        .mockResolvedValueOnce({ key: "session-1" })
-        .mockResolvedValueOnce({ key: "session-2" });
-
-      await adapter.deploy(testConfig);
-      await adapter.deploy({
-        ...testConfig,
-        id: "agent-support-001",
-        name: "Support Agent",
-      });
-
-      mockClient.get
-        .mockResolvedValueOnce({ key: "session-1", status: "active" })
-        .mockResolvedValueOnce({ key: "session-2", status: "active" });
+    it("returns all deployed agents", async () => {
+      await adapter.deploy(makeConfig({ id: "a1", name: "Agent 1" }));
+      await adapter.deploy(makeConfig({ id: "a2", name: "Agent 2" }));
 
       const agents = await adapter.listAgents();
       expect(agents).toHaveLength(2);
-    });
-  });
-
-  describe("healthCheck", () => {
-    it("should GET /api/status and return true if OK", async () => {
-      mockClient.get.mockResolvedValue({ status: "ok" });
-
-      const healthy = await adapter.healthCheck();
-
-      expect(mockClient.get).toHaveBeenCalledWith("/api/status");
-      expect(healthy).toBe(true);
+      expect(agents.map((a) => a.id).sort()).toEqual(["a1", "a2"]);
     });
 
-    it("should return false if request fails", async () => {
-      mockClient.get.mockRejectedValue(new Error("Connection refused"));
-
-      const healthy = await adapter.healthCheck();
-      expect(healthy).toBe(false);
+    it("returns empty array when none deployed", async () => {
+      const agents = await adapter.listAgents();
+      expect(agents).toEqual([]);
     });
-  });
-});
-
-describe("AdapterFactory", () => {
-  it("should create MockAdapter for 'mock' engine", () => {
-    const adapter = AdapterFactory.create("mock");
-    expect(adapter).toBeInstanceOf(MockAdapter);
-  });
-
-  it("should create OpenClawAdapter for 'openclaw' engine", () => {
-    const adapter = AdapterFactory.create("openclaw");
-    expect(adapter).toBeInstanceOf(OpenClawAdapter);
-  });
-
-  it("should throw for unknown engine", () => {
-    expect(() => AdapterFactory.create("unknown")).toThrow(/unknown engine/i);
-  });
-
-  it("should read AGENT_ENGINE env variable", () => {
-    process.env.AGENT_ENGINE = "mock";
-    const adapter = AdapterFactory.createFromEnv();
-    expect(adapter).toBeInstanceOf(MockAdapter);
-    delete process.env.AGENT_ENGINE;
-  });
-
-  it("should default to mock when AGENT_ENGINE not set", () => {
-    delete process.env.AGENT_ENGINE;
-    const adapter = AdapterFactory.createFromEnv();
-    expect(adapter).toBeInstanceOf(MockAdapter);
   });
 });

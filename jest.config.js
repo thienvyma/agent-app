@@ -8,6 +8,13 @@ const config = {
     "^@/(.*)$": "<rootDir>/src/$1",
   },
   passWithNoTests: true,
+  transform: {
+    "^.+\\.tsx?$": ["ts-jest", {
+      tsconfig: {
+        jsx: "react-jsx",
+      },
+    }],
+  },
 };
 
 module.exports = config;

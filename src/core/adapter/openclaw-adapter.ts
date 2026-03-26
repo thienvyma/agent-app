@@ -1,35 +1,40 @@
 /**
- * OpenClawAdapter — real implementation of IAgentEngine wrapping OpenClaw Gateway API.
+ * OpenClawAdapter — IAgentEngine implementation using OpenClaw Gateway.
  *
- * Maps IAgentEngine operations to OpenClaw HTTP endpoints:
- *   deploy     → POST /api/sessions
- *   undeploy   → DELETE /api/sessions/:key
- *   sendMessage → POST /api/sessions/:key/chat
- *   getStatus  → GET /api/sessions/:key
- *   listAgents → internal map + GET per session
- *   healthCheck → GET /api/status
+ * Uses:
+ * - OpenClawClient.chatCompletion() for sending messages (HTTP /v1/chat/completions)
+ * - OpenClawClient.healthCheck() for health verification
+ * - OpenClaw CLI for agent management (agents add/delete)
+ * - Internal Map as performance cache (NOT source of truth)
  *
- * @see docs/openclaw-integration.md Section 8
+ * Phase 67: Per-agent session routing — each agent gets its own
+ * OpenClaw session via `?session=agent:<id>:main` query parameter.
+ *
  * @module core/adapter/openclaw-adapter
  */
 
 import type { AgentConfig, AgentStatus, AgentResponse } from "@/types/agent";
 import type { IAgentEngine } from "./i-agent-engine";
 import { OpenClawClient } from "./openclaw-client";
+import type { ChatMessage } from "./openclaw-client";
+import { execOpenClaw } from "@/lib/openclaw-cli";
 
-/** Mapping from agent ID to OpenClaw session key */
-interface SessionMapping {
-  sessionKey: string;
+/** Internal agent registration entry */
+interface AgentRegistration {
   config: AgentConfig;
+  deployedAt: Date;
+  tokenUsage: number;
 }
 
 /**
  * OpenClaw Gateway adapter implementing IAgentEngine.
- * Manages agent↔session mappings internally.
+ *
+ * Manages agent registrations via OpenClaw CLI (agents add/delete)
+ * with in-memory Map as cache. Chat is routed to per-agent sessions.
  */
 export class OpenClawAdapter implements IAgentEngine {
-  /** Agent ID → OpenClaw session mapping */
-  private sessions: Map<string, SessionMapping> = new Map();
+  /** Agent ID → registration data (cache) */
+  private agents: Map<string, AgentRegistration> = new Map();
 
   /**
    * Create adapter with an OpenClaw HTTP client.
@@ -39,28 +44,33 @@ export class OpenClawAdapter implements IAgentEngine {
   constructor(private readonly client: OpenClawClient) {}
 
   /**
-   * Deploy agent by creating an OpenClaw session.
+   * Deploy agent by registering in OpenClaw and internal cache.
+   *
+   * Calls `openclaw agents add <id>` to register natively.
+   * Falls back to cache-only if CLI call fails.
    *
    * @param config - Agent configuration
    * @returns AgentStatus with RUNNING state
    * @throws Error if agent already deployed
    */
   async deploy(config: AgentConfig): Promise<AgentStatus> {
-    if (this.sessions.has(config.id)) {
+    if (this.agents.has(config.id)) {
       throw new Error(`Agent ${config.id} is already deployed`);
     }
 
-    const response = await this.client.post("/api/sessions", {
-      agent_id: config.id,
-      agent_name: config.name,
-      model: config.model,
-      tools: config.tools,
-      system_prompt: config.systemPrompt ?? config.sop,
-    }) as { key: string };
+    // Register in OpenClaw via CLI (best-effort)
+    try {
+      await execOpenClaw(["agents", "add", config.id], 15_000);
+    } catch {
+      // Fallback: in-memory only (gateway may be offline)
+      console.warn(`[OpenClawAdapter] CLI agents add failed for ${config.id}, using cache-only`);
+    }
 
-    this.sessions.set(config.id, {
-      sessionKey: response.key,
+    // Always register in cache
+    this.agents.set(config.id, {
       config,
+      deployedAt: new Date(),
+      tokenUsage: 0,
     });
 
     return {
@@ -73,19 +83,26 @@ export class OpenClawAdapter implements IAgentEngine {
   }
 
   /**
-   * Undeploy agent by destroying its OpenClaw session.
+   * Undeploy agent by removing from OpenClaw and internal cache.
+   *
+   * Calls `openclaw agents delete <id>` to deregister natively.
    *
    * @param agentId - Agent to undeploy
    * @throws Error if agent not found
    */
   async undeploy(agentId: string): Promise<void> {
-    const mapping = this.sessions.get(agentId);
-    if (!mapping) {
+    if (!this.agents.has(agentId)) {
       throw new Error(`Agent ${agentId} not found`);
     }
 
-    await this.client.delete(`/api/sessions/${mapping.sessionKey}`);
-    this.sessions.delete(agentId);
+    // Remove from OpenClaw via CLI (best-effort)
+    try {
+      await execOpenClaw(["agents", "delete", agentId], 15_000);
+    } catch {
+      console.warn(`[OpenClawAdapter] CLI agents delete failed for ${agentId}`);
+    }
+
+    this.agents.delete(agentId);
   }
 
   /**
@@ -94,28 +111,31 @@ export class OpenClawAdapter implements IAgentEngine {
    * @param agentId - Agent to redeploy
    * @param config - Partial config to merge
    * @returns Updated AgentStatus
+   * @throws Error if agent not found
    */
   async redeploy(
     agentId: string,
     config?: Partial<AgentConfig>
   ): Promise<AgentStatus> {
-    const mapping = this.sessions.get(agentId);
-    if (!mapping) {
+    const registration = this.agents.get(agentId);
+    if (!registration) {
       throw new Error(`Agent ${agentId} not found`);
     }
 
     await this.undeploy(agentId);
-    const mergedConfig: AgentConfig = { ...mapping.config, ...config };
+    const mergedConfig: AgentConfig = { ...registration.config, ...config };
     return this.deploy(mergedConfig);
   }
 
   /**
-   * Send message to agent via OpenClaw chat endpoint.
+   * Send message to agent via OpenClaw chat completion.
+   *
+   * Routes to per-agent session using key `agent:<id>:main`.
    *
    * @param agentId - Target agent
-   * @param message - Message content
-   * @param context - Optional context string
-   * @returns AgentResponse with normalized data
+   * @param message - User message content
+   * @param context - Optional context string (from ContextBuilder)
+   * @returns AgentResponse with message and token usage
    * @throws Error if agent not found
    */
   async sendMessage(
@@ -123,53 +143,64 @@ export class OpenClawAdapter implements IAgentEngine {
     message: string,
     context?: string
   ): Promise<AgentResponse> {
-    const mapping = this.sessions.get(agentId);
-    if (!mapping) {
+    const registration = this.agents.get(agentId);
+    if (!registration) {
       throw new Error(`Agent ${agentId} not found`);
     }
 
-    const response = await this.client.post(
-      `/api/sessions/${mapping.sessionKey}/chat`,
-      {
-        message,
-        context: context ?? undefined,
-      }
-    ) as { response?: string; message?: string; token_usage?: number };
+    const { config } = registration;
 
-    // Update token usage tracking
-    const tokenUsed = response.token_usage ?? 0;
+    // Build system prompt from SOP + context
+    const systemPrompt = this.buildSystemPrompt(config, context);
+
+    // Build messages array
+    const messages: ChatMessage[] = [
+      { role: "system", content: systemPrompt },
+      { role: "user", content: message },
+    ];
+
+    // Per-agent session key: agent:<id>:main
+    const sessionKey = `agent:${agentId}:main`;
+
+    // Send via HTTP client with per-agent session routing
+    const response = await this.client.chatCompletion(
+      {
+        model: config.model,
+        messages,
+      },
+      sessionKey
+    );
+
+    // Update internal token tracking
+    registration.tokenUsage += response.tokenUsed;
 
     return {
       agentId,
-      message: response.response ?? response.message ?? "",
-      tokenUsed,
+      message: response.message,
+      tokenUsed: response.tokenUsed,
       timestamp: new Date(),
     };
   }
 
   /**
-   * Get agent status from OpenClaw session details.
+   * Get agent status from internal cache.
    *
    * @param agentId - Agent to check
    * @returns AgentStatus
    * @throws Error if agent not found
    */
   async getStatus(agentId: string): Promise<AgentStatus> {
-    const mapping = this.sessions.get(agentId);
-    if (!mapping) {
+    const registration = this.agents.get(agentId);
+    if (!registration) {
       throw new Error(`Agent ${agentId} not found`);
     }
 
-    const session = await this.client.get(
-      `/api/sessions/${mapping.sessionKey}`
-    ) as { status?: string };
-
     return {
       id: agentId,
-      name: mapping.config.name,
-      status: this.mapSessionStatus(session.status),
+      name: registration.config.name,
+      status: "RUNNING",
       lastActivity: new Date(),
-      tokenUsage: 0,
+      tokenUsage: registration.tokenUsage,
     };
   }
 
@@ -181,13 +212,14 @@ export class OpenClawAdapter implements IAgentEngine {
   async listAgents(): Promise<AgentStatus[]> {
     const statuses: AgentStatus[] = [];
 
-    for (const [agentId] of this.sessions) {
-      try {
-        const status = await this.getStatus(agentId);
-        statuses.push(status);
-      } catch {
-        // Agent may have been removed externally
-      }
+    for (const [agentId, registration] of this.agents) {
+      statuses.push({
+        id: agentId,
+        name: registration.config.name,
+        status: "RUNNING",
+        lastActivity: new Date(),
+        tokenUsage: registration.tokenUsage,
+      });
     }
 
     return statuses;
@@ -196,41 +228,35 @@ export class OpenClawAdapter implements IAgentEngine {
   /**
    * Check if OpenClaw Gateway is healthy.
    *
-   * @returns true if /api/status responds OK
+   * @returns true if gateway is responsive
    */
   async healthCheck(): Promise<boolean> {
-    try {
-      await this.client.get("/api/status");
-      return true;
-    } catch {
-      return false;
-    }
+    return this.client.healthCheck();
   }
 
   /**
-   * Map OpenClaw session status string to AgentStatus type.
+   * Build system prompt from agent SOP and optional context.
    *
-   * @param status - Raw status from OpenClaw
-   * @returns Normalized status value
+   * @param config - Agent configuration (contains SOP)
+   * @param context - Optional context from ContextBuilder
+   * @returns Complete system prompt string
    */
-  private mapSessionStatus(
-    status?: string
-  ): AgentStatus["status"] {
-    switch (status) {
-      case "active":
-      case "running":
-        return "RUNNING";
-      case "idle":
-      case "waiting":
-        return "IDLE";
-      case "error":
-      case "failed":
-        return "ERROR";
-      case "deploying":
-      case "starting":
-        return "DEPLOYING";
-      default:
-        return "RUNNING";
+  private buildSystemPrompt(
+    config: AgentConfig,
+    context?: string
+  ): string {
+    const parts: string[] = [];
+
+    // Agent identity + SOP
+    if (config.sop) {
+      parts.push(config.sop);
     }
+
+    // Injected context (from memory, knowledge, corrections)
+    if (context) {
+      parts.push(`\n--- Context ---\n${context}`);
+    }
+
+    return parts.join("\n") || `You are ${config.name}, a ${config.role}.`;
   }
 }

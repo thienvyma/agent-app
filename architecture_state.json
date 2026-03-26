@@ -2,10 +2,10 @@
   "project": "agentic-enterprise",
   "version": "0.0.0",
   "phase": 12,
-  "current_session": 58,
-  "total_sessions": 58,
-  "total_phases": 58,
-  "last_session_date": "2026-03-25",
+  "current_session": 68,
+  "total_sessions": 73,
+  "total_phases": 73,
+  "last_session_date": "2026-03-26",
   "stages": {
     "A": { "name": "Nền Tảng", "phases": [1, 2] },
     "B": { "name": "Engine", "phases": [3, 4] },
@@ -74,7 +74,15 @@
     "phase-55-telegram-config-ui":   { "status": "completed",  "sessions": [55] },
     "phase-56-pipeline-viewer":      { "status": "completed",  "sessions": [56] },
     "phase-57-multi-tenant-ui":      { "status": "completed",  "sessions": [57] },
-    "phase-58-realtime-sse":         { "status": "completed",  "sessions": [58] }
+    "phase-58-realtime-sse":         { "status": "completed",  "sessions": [58] },
+
+    "phase-67-per-agent-sessions":   { "status": "completed",  "sessions": [67] },
+    "phase-68-cron-scheduling":      { "status": "planned",    "sessions": [68] },
+    "phase-69-agent-communication":  { "status": "planned",    "sessions": [69] },
+    "phase-70-memory-tier1":         { "status": "planned",    "sessions": [70] },
+    "phase-71-tool-execution":       { "status": "planned",    "sessions": [71] },
+    "phase-72-telegram-binding":     { "status": "planned",    "sessions": [72] },
+    "phase-73-session-history":      { "status": "planned",    "sessions": [73] }
   },
   "modules": {
     "foundation":        { "status": "completed",    "session": 0 },

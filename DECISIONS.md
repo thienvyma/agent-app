@@ -281,3 +281,59 @@ App (TypeScript) → HTTP API → LightRAG Service (Python) → PostgreSQL
 ```
 
 **Ngày**: 2026-03-24 (Session 10 review)
+
+---
+
+## D16: Deep OpenClaw Integration — 7 Features Wrap
+
+**Quyết định**: Chuyển adapter từ thin `/v1/chat/completions` client → deep multi-agent wrapper dùng full OpenClaw API surface.
+
+**Vấn đề phát hiện** (Session 66 audit):
+- `openclaw-integration.md` thiết kế 60% wrap / 40% build
+- Thực tế: chỉ dùng 1 endpoint `/v1/chat/completions` (~10% API surface)
+- 7 tính năng thiết kế là WRAP nhưng implement standalone
+
+**7 Features cần wire**:
+| # | Feature | Từ (hiện tại) | Đến (wrap) |
+|---|---------|---------------|------------|
+| 1 | Agent sessions | Shared main session | Per-agent: `agent:<id>:main` |
+| 2 | Cron scheduling | BullMQ standalone | `openclaw cron add/remove` |
+| 3 | Agent communication | BullMQ pub/sub | `sessions_spawn` / `message` |
+| 4 | Memory Tier 1 | Không đọc | Read MEMORY.md native |
+| 5 | Tool execution | ToolRegistry standalone | 26+ built-in tools |
+| 6 | Telegram binding | Shared main | `openclaw agents bind` |
+| 7 | Session history | Prisma only | Merge OpenClaw + Prisma |
+
+**Approach**: 7 phases (S67-S73), Phase 67 là foundation, còn lại có thể song song.
+
+**Nguyên tắc**:
+- MockAdapter KHÔNG thay đổi → regression safe
+- Fallback: khi gateway offline → giữ behavior hiện tại
+- Interface `IAgentEngine` KHÔNG đổi → chỉ implementation thay đổi
+
+**Ngày**: 2026-03-26 (Architecture audit)
+
+---
+
+## D17: Telegram Routing — 1 Bot + CEO Default
+
+**Quyết định**: Dùng 1 bot Telegram duy nhất, CEO agent là entry point mặc định.
+
+**Flow**:
+```
+Owner nhắn Telegram DM → Gateway → CEO (agent:ceo:main)
+CEO phân tích → sessions_spawn → Marketing/Developer/Finance
+CEO tổng hợp kết quả → reply Telegram
+```
+
+**Lý do chọn Cách A** (1 bot) thay vì Cách B (nhiều bot):
+- Owner chỉ tương tác với 1 bot — đơn giản
+- CEO là "cửa ngõ" theo PRD — nhận lệnh → delegate
+- Agents khác xử lý nội bộ qua sessions_spawn
+- Mở rộng: bind groups Telegram → agents cụ thể nếu cần
+
+**Config**: `bindings: [{ agentId: "ceo", match: { channel: "telegram" } }]`
+
+**Ngày**: 2026-03-26
+
+

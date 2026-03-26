@@ -89,6 +89,9 @@ export class AdapterFactory {
     }
 
     // Fallback to mock
+    console.warn(
+      "[AdapterFactory] OpenClaw unreachable, falling back to MockAdapter"
+    );
     return new MockAdapter();
   }
 }

@@ -20,6 +20,10 @@ import {
   AlertTriangle,
   Terminal,
 } from "lucide-react";
+import { OnboardWizard } from "@/components/settings/onboard-wizard";
+import { GatewayPanel } from "@/components/settings/gateway-panel";
+import { ModelsPanel } from "@/components/settings/models-panel";
+import { ConfigPanel } from "@/components/settings/config-panel";
 
 /** Reusable status badge */
 function StatusBadge({ ok, label }: { ok: boolean; label: string }) {
@@ -103,13 +107,27 @@ function Panel({ title, icon: Icon, iconColor, children, defaultOpen = true }: {
 export default function OpenClawSettingsPage() {
   // ── State ──
   const [version, setVersion] = useState<string>("");
-  const [gateway, setGateway] = useState<{ running: boolean; status: unknown; errors: string | null } | null>(null);
+  const [gateway, setGateway] = useState<{
+    running: boolean;
+    status: unknown;
+    errors: string | null;
+    dashboardUrl?: string;
+    serviceStatus?: string;
+    serviceMissing?: boolean;
+    port?: number;
+  } | null>(null);
   const [models, setModels] = useState<{ models: unknown; status: unknown } | null>(null);
   const [configValidation, setConfigValidation] = useState<{ valid: boolean; output: unknown } | null>(null);
   const [cliAvailable, setCliAvailable] = useState(true);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [actionLog, setActionLog] = useState<Array<{ time: string; action: string; result: string; ok: boolean }>>([]);
+  const [showWizard, setShowWizard] = useState(false);
+
+  // Models panel state
+  const [testResult, setTestResult] = useState<string | null>(null);
+  const [fetchedModels, setFetchedModels] = useState<string[]>([]);
+  const [panelLoading, setPanelLoading] = useState<string | null>(null);
 
   // Config editor
   const [configPath, setConfigPath] = useState("");
@@ -207,23 +225,30 @@ export default function OpenClawSettingsPage() {
         <StatusBadge ok={gateway?.running ?? false} label={gateway?.running ? "Gateway Online" : "Gateway Offline"} />
       </div>
 
-      {/* CLI Not Found Banner */}
-      {!cliAvailable && (
+      {/* Onboard Wizard — show when gateway offline, CLI not available, or user requests */}
+      {(showWizard || !cliAvailable || !gateway?.running) && (
+        <OnboardWizard onComplete={() => { setShowWizard(false); fetchAll(); }} />
+      )}
+
+      {/* Manual wizard trigger when everything is working but user wants to reconfigure */}
+      {cliAvailable && gateway?.running && !showWizard && (
         <div style={{
           display: "flex", alignItems: "center", gap: 10,
-          padding: "14px 18px", borderRadius: 12, fontSize: 13,
-          background: "rgba(245,158,11,0.08)", border: "1px solid rgba(245,158,11,0.2)",
-          color: "#fbbf24",
+          padding: "10px 16px", borderRadius: 10, fontSize: 13,
+          background: "rgba(99,102,241,0.06)", border: "1px solid rgba(99,102,241,0.15)",
+          color: "#818cf8",
         }}>
-          <AlertTriangle size={18} />
-          <div>
-            <strong>OpenClaw CLI not found</strong>
-            <p style={{ margin: "4px 0 0", color: "#94a3b8", fontSize: 12 }}>
-              Install OpenClaw CLI to enable configuration management. Visit{" "}
-              <a href="https://openclaw.ai" target="_blank" rel="noreferrer" style={{ color: "#818cf8" }}>openclaw.ai</a>
-              {" "}for installation instructions.
-            </p>
-          </div>
+          <span>Need to reconfigure?</span>
+          <button
+            onClick={() => setShowWizard(true)}
+            style={{
+              background: "rgba(99,102,241,0.1)", border: "1px solid rgba(99,102,241,0.3)",
+              borderRadius: 6, color: "#818cf8", padding: "4px 12px", fontSize: 12,
+              cursor: "pointer", fontWeight: 600,
+            }}
+          >
+            Launch Setup Wizard
+          </button>
         </div>
       )}
 
@@ -258,76 +283,60 @@ export default function OpenClawSettingsPage() {
 
       {/* ═══ 2. Gateway ═══ */}
       <Panel title="Gateway Control" icon={Server} iconColor="#22c55e">
-        <div style={{ display: "flex", flexDirection: "column", gap: 12, paddingTop: 16 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-            <StatusBadge ok={gateway?.running ?? false} label={gateway?.running ? "Running" : "Stopped"} />
-            {gateway?.errors && (
-              <span style={{ fontSize: 12, color: "#f87171", display: "flex", alignItems: "center", gap: 4 }}>
-                <AlertTriangle size={12} /> {typeof gateway.errors === "string" ? gateway.errors.slice(0, 100) : "Error"}
-              </span>
-            )}
-          </div>
-          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-            <ActionBtn label="Start" icon={Play} variant="primary"
-              loading={actionLoading === "gw-start"}
-              onClick={() => doAction("gw-start", "/api/openclaw/gateway", {
-                method: "POST", headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ action: "start" }),
-              })} />
-            <ActionBtn label="Stop" icon={Square} variant="danger"
-              loading={actionLoading === "gw-stop"}
-              onClick={() => doAction("gw-stop", "/api/openclaw/gateway", {
-                method: "POST", headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ action: "stop" }),
-              })} />
-            <ActionBtn label="Restart" icon={RotateCw}
-              loading={actionLoading === "gw-restart"}
-              onClick={() => doAction("gw-restart", "/api/openclaw/gateway", {
-                method: "POST", headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ action: "restart" }),
-              })} />
-          </div>
-        </div>
+        <GatewayPanel
+          running={gateway?.running ?? false}
+          errors={typeof gateway?.errors === "string" ? gateway.errors : null}
+          port={gateway?.port ?? 18789}
+          dashboardUrl={gateway?.dashboardUrl}
+          serviceStatus={gateway?.serviceStatus}
+          serviceMissing={gateway?.serviceMissing}
+          actionLoading={actionLoading}
+          onAction={(action) => doAction(`gw-${action}`, "/api/openclaw/gateway", {
+            method: "POST", headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ action }),
+          })}
+        />
       </Panel>
 
       {/* ═══ 3. Models ═══ */}
       <Panel title="Model Management" icon={Cpu} iconColor="#3b82f6">
-        <div style={{ display: "flex", flexDirection: "column", gap: 12, paddingTop: 16 }}>
-          {/* Current model info */}
-          <div style={{ padding: 12, background: "#0B0F19", borderRadius: 10, border: "1px solid #1E2535", fontSize: 13 }}>
-            {!cliAvailable ? (
-              <p style={{ color: "#94a3b8", margin: 0 }}>No model data — OpenClaw CLI not available</p>
-            ) : models?.status ? (
-              <pre style={{ color: "#94a3b8", margin: 0, whiteSpace: "pre-wrap", maxHeight: 120, overflow: "auto" }}>
-                {typeof models.status === "object" ? JSON.stringify(models.status, null, 2) : String(models.status)}
-              </pre>
-            ) : (
-              <p style={{ color: "#94a3b8", margin: 0 }}>No model configured yet</p>
-            )}
-          </div>
-          {/* Set primary model */}
-          <div style={{ display: "flex", gap: 8 }}>
-            <input
-              value={modelInput}
-              onChange={(e) => setModelInput(e.target.value)}
-              placeholder="e.g. ollama-lan/qwen2.5:7b or anthropic/claude-sonnet-4-6"
-              style={{
-                flex: 1, padding: "8px 12px", borderRadius: 8, fontSize: 13,
-                background: "#0B0F19", border: "1px solid #1E2535", color: "#e2e8f0",
-                outline: "none", fontFamily: "monospace",
-              }}
-            />
-            <ActionBtn label="Set Model" icon={Cpu} variant="primary"
-              loading={actionLoading === "set-model"}
-              onClick={() => {
-                if (!modelInput.trim()) return;
-                doAction("set-model", "/api/openclaw/models", {
-                  method: "POST", headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({ model: modelInput.trim() }),
-                });
-              }} />
-          </div>
-        </div>
+        <ModelsPanel
+          models={models?.models ? (Array.isArray(models.models) ? models.models as { name: string; input: string; context: string; local: boolean; auth: boolean; tags: string }[] : []) : []}
+          currentModel={modelInput || "ollama-lan/Qwen3.5-35B-A3B-Coder"}
+          testResult={testResult}
+          fetchedModels={fetchedModels}
+          loading={panelLoading}
+          onSetModel={(model) => {
+            doAction("set-model", "/api/openclaw/models", {
+              method: "POST", headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ model }),
+            });
+          }}
+          onTestModel={async () => {
+            setPanelLoading("test-model");
+            try {
+              const res = await fetch("/api/openclaw/onboard", {
+                method: "POST", headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ step: "health" }),
+              });
+              const json = await res.json();
+              setTestResult(json.success ? "✅ Model responding" : `❌ ${json.error}`);
+            } catch (e) { setTestResult(`❌ ${e}`); }
+            finally { setPanelLoading(null); }
+          }}
+          onFetchModels={async () => {
+            setPanelLoading("fetch-models");
+            try {
+              const res = await fetch("/api/openclaw/onboard", {
+                method: "POST", headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ step: "models", params: { baseUrl: "http://192.168.1.35:8080/v1" } }),
+              });
+              const json = await res.json();
+              if (json.success && Array.isArray(json.data)) setFetchedModels(json.data);
+            } catch { /* ignore */ }
+            finally { setPanelLoading(null); }
+          }}
+        />
       </Panel>
 
       {/* ═══ 4. Provider Auth ═══ */}
@@ -387,62 +396,26 @@ export default function OpenClawSettingsPage() {
 
       {/* ═══ 5. Config Editor (Advanced) ═══ */}
       <Panel title="Config Editor (Advanced)" icon={Terminal} iconColor="#c084fc" defaultOpen={false}>
-        <div style={{ display: "flex", flexDirection: "column", gap: 12, paddingTop: 16 }}>
-          <p style={{ fontSize: 12, color: "#64748b", margin: 0 }}>
-            Read/write any OpenClaw config path via <code style={{ color: "#818cf8" }}>openclaw config get/set</code>
-          </p>
-          <div style={{ display: "flex", gap: 8 }}>
-            <input
-              value={configPath}
-              onChange={(e) => setConfigPath(e.target.value)}
-              placeholder="Config path (e.g. gateway.auth.mode)"
-              style={{
-                flex: 1, padding: "8px 12px", borderRadius: 8, fontSize: 13,
-                background: "#0B0F19", border: "1px solid #1E2535", color: "#e2e8f0",
-                outline: "none", fontFamily: "monospace",
-              }}
-            />
-            <ActionBtn label="Get" icon={ChevronRight}
-              loading={actionLoading === "config-get"}
-              onClick={async () => {
-                if (!configPath.trim()) return;
-                setActionLoading("config-get");
-                try {
-                  const res = await fetch(`/api/openclaw/config?path=${encodeURIComponent(configPath)}`);
-                  const json = await res.json();
-                  setConfigResult(json.data?.value ?? json.data?.error ?? "No result");
-                  log("config get " + configPath, json.data?.value ?? "error", json.data?.exitCode === 0);
-                } catch (err) { setConfigResult(String(err)); }
-                finally { setActionLoading(null); }
-              }} />
-          </div>
-          <div style={{ display: "flex", gap: 8 }}>
-            <input
-              value={configValue}
-              onChange={(e) => setConfigValue(e.target.value)}
-              placeholder="Value to set"
-              style={{
-                flex: 1, padding: "8px 12px", borderRadius: 8, fontSize: 13,
-                background: "#0B0F19", border: "1px solid #1E2535", color: "#e2e8f0",
-                outline: "none", fontFamily: "monospace",
-              }}
-            />
-            <ActionBtn label="Set" icon={CheckCircle2} variant="primary"
-              loading={actionLoading === "config-set"}
-              onClick={() => {
-                if (!configPath.trim() || !configValue.trim()) return;
-                doAction("config-set", "/api/openclaw/config", {
-                  method: "POST", headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({ path: configPath, value: configValue }),
-                });
-              }} />
-          </div>
-          {configResult && (
-            <div style={{ padding: 12, background: "#0B0F19", borderRadius: 10, border: "1px solid #1E2535" }}>
-              <pre style={{ color: "#94a3b8", margin: 0, fontSize: 13, whiteSpace: "pre-wrap" }}>{configResult}</pre>
-            </div>
-          )}
-        </div>
+        <ConfigPanel
+          loading={actionLoading}
+          onGet={async (path) => {
+            setActionLoading("config-get");
+            try {
+              const res = await fetch(`/api/openclaw/config?path=${encodeURIComponent(path)}`);
+              const json = await res.json();
+              const val = json.data?.value ?? json.data?.error ?? "No result";
+              log("config get " + path, val, json.data?.exitCode === 0);
+              return val;
+            } catch (err) { return String(err); }
+            finally { setActionLoading(null); }
+          }}
+          onSet={async (path, value) => {
+            await doAction("config-set", "/api/openclaw/config", {
+              method: "POST", headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ path, value }),
+            });
+          }}
+        />
       </Panel>
 
       {/* ═══ Action Log ═══ */}

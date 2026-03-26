@@ -4,9 +4,9 @@
 
 ---
 
-## Session Hiện Tại: Session 55 (Telegram Config UI)
-**Status**: 🟡 In Progress
-**Ngày**: 2026-03-25
+## Session Hiện Tại: Session 66 (Config Panel + Polish)
+**Status**: ✅ Completed
+**Ngày**: 2026-03-26
 
 ## Tổng Quan
 
@@ -81,6 +81,16 @@
 | **S56 - Pipeline Viewer** | ✅ Completed | Agent Detail: 7-step execution viewer + Pipeline tab | — |
 | **S57 - Multi-Tenant** | ✅ Completed | Companies tab (TDD: 12 tests) + CRUD UI | — |
 | **S58 - Realtime SSE** | ✅ Completed | SSE endpoint + RealtimeFeed + Activity Live toggle (TDD: 11 tests) | — |
+| | | | |
+| **--- OPENCLAW UI INTEGRATION (S59-S66) ---** | | | |
+| **S59 - Fix Config** | ✅ Completed | Fix model→Qwen3.5, apiKey→sk-local, verify CLI chat OK, HTTP 404 | — |
+| **S60 - Rewrite Client** | ✅ Completed | OpenClawClient: chatCompletion + healthCheck + Bearer auth (TDD 14/14) | — |
+| **S61 - Rewrite Adapter** | ✅ Completed | OpenClawAdapter: internal Map + SOP system prompt + chatCompletion (TDD 15/15) | — |
+| **S62 - Factory+Interface** | ✅ Completed | IAgentEngine JSDoc cleanup + factory warn log + container verify (40/40 tests) | — |
+| **S63 - Onboard Backend** | ✅ Completed | OnboardExecutor 6 methods + API route /api/openclaw/onboard (TDD 10/10) | — |
+| **S64 - Onboard Wizard** | ✅ Completed | 6-step wizard UI + jest-environment-jsdom + Settings integration (TDD 7/7) | — |
+| **S65 - Gateway+Models** | ✅ Completed | GatewayPanel + ModelsPanel extracted components (TDD 14/14) | — |
+| **S66 - Config+Polish** | ✅ Completed | ConfigPanel + 4 CLI functions + final cleanup (TDD 7/7, 835/836 total) | — |
 
 ---
 
@@ -926,3 +936,32 @@ DailyReport (BUILD) → summary → Telegram
 | Phases | 45/45 |
 
 ---
+
+## Session 67: Per-Agent Sessions (OpenClaw Deep Integration) ✅
+
+### Đã làm:
+1. `tests/adapter/openclaw-adapter.test.ts` — +4 TDD tests (CLI agents add/delete, session key, fallback)
+2. `tests/adapter/openclaw-client.test.ts` — Updated 3 tests (X-Session-Key header → ?session= query param)
+3. `src/core/adapter/openclaw-adapter.ts` — deploy→`openclaw agents add`, undeploy→`openclaw agents delete`, sendMessage→session key `agent:<id>:main`
+4. `src/core/adapter/openclaw-client.ts` — chatCompletion: X-Session-Key header → ?session= query parameter
+5. `src/lib/openclaw-cli.ts` — +3 functions: `agentAdd()`, `agentDelete()`, `sessionsList()`
+
+### Key Changes:
+```
+TRƯỚC: All agents share `/v1/chat/completions` (no session isolation)
+SAU:   Each agent routes to `/v1/chat/completions?session=agent:<id>:main`
+       Deploy → `openclaw agents add <id>` (CLI, best-effort)
+       Undeploy → `openclaw agents delete <id>` (CLI, best-effort)
+       In-memory Map kept as performance cache
+```
+
+### Verification:
+- ✅ `npx tsc --noEmit` → 0 errors
+- ✅ `npx jest tests/adapter/` → 44/44 pass (3 suites)
+- ✅ All existing tests unchanged (MockAdapter regression safe)
+
+### Lỗi Tồn Đọng: Không có (Phase 67 scope)
+
+### Bước Tiếp Theo:
+→ **Phase 72: Telegram Fix** — pairing CLI args + CEO agent binding
+
