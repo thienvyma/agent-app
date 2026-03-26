@@ -32,11 +32,54 @@ let realtimeHubInstance: RealtimeHub | null = null;
  * - Tries OpenClaw first (if USE_MOCK_ADAPTER !== "true")
  * - Falls back to MockAdapter if unreachable
  *
+ * After creation, auto-deploys all DB agents into the engine's
+ * in-memory Map so they're immediately available for chat.
+ *
  * @returns Global IAgentEngine instance
  */
 export async function getEngine(): Promise<IAgentEngine> {
   if (!engineInstance) {
     engineInstance = await AdapterFactory.createWithFallback();
+
+    // Auto-deploy all existing DB agents into engine cache
+    try {
+      const { prisma } = await import("@/lib/prisma");
+      const dbAgents = await prisma.agent.findMany({
+        select: {
+          id: true,
+          name: true,
+          role: true,
+          sop: true,
+          model: true,
+          tools: true,
+          skills: true,
+          isAlwaysOn: true,
+          cronSchedule: true,
+        },
+      });
+
+      for (const agent of dbAgents) {
+        try {
+          await engineInstance.deploy({
+            id: agent.id,
+            name: agent.name,
+            role: agent.role,
+            sop: agent.sop,
+            model: agent.model,
+            tools: agent.tools as string[],
+            skills: agent.skills as string[],
+            isAlwaysOn: agent.isAlwaysOn,
+            cronSchedule: agent.cronSchedule ?? undefined,
+          });
+        } catch {
+          // Agent may already exist or other deploy issue — skip
+        }
+      }
+
+      console.log(`[EngineSingleton] Auto-deployed ${dbAgents.length} agents from DB`);
+    } catch (err) {
+      console.warn("[EngineSingleton] Failed to auto-deploy DB agents:", err);
+    }
   }
   return engineInstance;
 }
