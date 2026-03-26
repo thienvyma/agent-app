@@ -12,7 +12,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { apiResponse, apiError, handleApiError } from "@/lib/api-auth";
-import { configSet } from "@/lib/openclaw-cli";
+import { configSet, execOpenClaw } from "@/lib/openclaw-cli";
 
 /**
  * GET /api/agents/[id] — Get agent detail.
@@ -120,10 +120,20 @@ export async function PATCH(
     let openclawSynced = false;
     if (body.model) {
       try {
-        // Find agent index in openclaw config agents.list
-        const agentName = existing.name.toLowerCase().replace(/\s+/g, "-");
-        await configSet(`agents.list.${agentName}.model`, body.model);
-        openclawSynced = true;
+        // Sync model to OpenClaw using agents model command
+        // Format: provider/model-name (e.g. ollama-lan/qwen2.5:7b)
+        const slug = existing.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+        // Try to set model for the specific agent via config set
+        // OpenClaw agents.list is an array, so we need the index
+        const listResult = await execOpenClaw(["agents", "list", "--json"], 5_000);
+        if (listResult.exitCode === 0 && listResult.stdout.trim()) {
+          const agents = JSON.parse(listResult.stdout) as Array<{ id: string }>;
+          const idx = agents.findIndex((a) => a.id === slug || a.id === "main");
+          if (idx >= 0) {
+            await configSet(`agents.list[${idx}].model`, body.model);
+            openclawSynced = true;
+          }
+        }
       } catch {
         // Best-effort: DB is source of truth
       }
