@@ -174,10 +174,10 @@ export default function OpenClawSettingsPage() {
   const [configValue, setConfigValue] = useState("");
   const [configResult, setConfigResult] = useState("");
 
-  // Auth form
-  const [authProvider, setAuthProvider] = useState("anthropic");
+  // Auth form — defaults to first dropdown option (gemini) with pre-filled URL
+  const [authProvider, setAuthProvider] = useState("gemini");
   const [authApiKey, setAuthApiKey] = useState("");
-  const [authBaseUrl, setAuthBaseUrl] = useState("");
+  const [authBaseUrl, setAuthBaseUrl] = useState("https://generativelanguage.googleapis.com/v1beta/openai");
 
   // Model set form
   const [modelInput, setModelInput] = useState("");
