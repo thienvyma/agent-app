@@ -301,3 +301,120 @@ describe("MessageRouter", () => {
     });
   });
 });
+
+// ============================================================
+// Session 69: OpenClaw Hybrid Messaging Tests
+// ============================================================
+
+describe("MessageBus (OpenClaw Hybrid Enhancement)", () => {
+  let bus: MessageBus;
+  let mockDb: ReturnType<typeof createMockDb>;
+  let mockQueue: ReturnType<typeof createMockQueue>;
+  let mockCli: jest.Mock;
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockDb = createMockDb();
+    mockQueue = createMockQueue();
+    mockCli = jest.fn().mockResolvedValue({ stdout: "", stderr: "", exitCode: 0 });
+    bus = new MessageBus(mockDb as never, mockQueue as never, { cliExecutor: mockCli });
+  });
+
+  it("should call CLI messageSend when executor provided", async () => {
+    const msg: BusMessage = {
+      fromAgentId: "a-ceo",
+      toAgentId: "a-mkt",
+      content: "Create Q2 plan",
+      type: MessageType.DELEGATE,
+    };
+    mockDb.message.create.mockResolvedValue({ id: "msg-h1", ...msg });
+
+    await bus.publish(msg);
+
+    expect(mockCli).toHaveBeenCalledWith(
+      expect.arrayContaining(["message", "send"]),
+      expect.any(Number)
+    );
+  });
+
+  it("should still save to DB and BullMQ after CLI call", async () => {
+    const msg: BusMessage = {
+      fromAgentId: "a-ceo",
+      toAgentId: "a-mkt",
+      content: "Important task",
+      type: MessageType.DELEGATE,
+    };
+    mockDb.message.create.mockResolvedValue({ id: "msg-h2", ...msg });
+
+    await bus.publish(msg);
+
+    expect(mockDb.message.create).toHaveBeenCalled();
+    expect(mockQueue.add).toHaveBeenCalled();
+    expect(mockCli).toHaveBeenCalled();
+  });
+
+  it("should work when CLI fails (graceful fallback)", async () => {
+    mockCli.mockRejectedValue(new Error("CLI not available"));
+    const msg: BusMessage = {
+      fromAgentId: "a-ceo",
+      toAgentId: "a-mkt",
+      content: "Fallback test",
+      type: MessageType.DELEGATE,
+    };
+    mockDb.message.create.mockResolvedValue({ id: "msg-h3", ...msg });
+
+    const messageId = await bus.publish(msg);
+
+    expect(messageId).toBe("msg-h3");
+    expect(mockDb.message.create).toHaveBeenCalled();
+    expect(mockQueue.add).toHaveBeenCalled();
+  });
+
+  it("should call CLI for each agent in broadcast", async () => {
+    const msg: BusMessage = {
+      fromAgentId: "a-ceo",
+      toAgentId: "",
+      content: "Team update",
+      type: MessageType.GROUP,
+    };
+    mockDb.message.create
+      .mockResolvedValueOnce({ id: "msg-b1", ...msg, toAgentId: "a-mkt" })
+      .mockResolvedValueOnce({ id: "msg-b2", ...msg, toAgentId: "a-fin" });
+
+    await bus.broadcast(msg, ["a-mkt", "a-fin"]);
+
+    // CLI called once per agent
+    expect(mockCli).toHaveBeenCalledTimes(2);
+  });
+});
+
+describe("MessageRouter (OpenClaw routeToOwner Enhancement)", () => {
+  let router: MessageRouter;
+  let mockBus: { publish: jest.Mock; broadcast: jest.Mock };
+  let mockHierarchy: ReturnType<typeof createMockHierarchy>;
+  let mockCli: jest.Mock;
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockBus = {
+      publish: jest.fn().mockResolvedValue("msg-routed-001"),
+      broadcast: jest.fn().mockResolvedValue(["msg-b1", "msg-b2"]),
+    };
+    mockHierarchy = createMockHierarchy();
+    mockCli = jest.fn().mockResolvedValue({ stdout: "", stderr: "", exitCode: 0 });
+    router = new MessageRouter(
+      mockHierarchy as never,
+      mockBus as never,
+      { cliExecutor: mockCli }
+    );
+  });
+
+  it("should send to Telegram via CLI instead of console.log", async () => {
+    await router.routeToOwner("Agent needs attention", "a-mkt");
+
+    expect(mockCli).toHaveBeenCalledWith(
+      expect.arrayContaining(["message", "send"]),
+      expect.any(Number)
+    );
+  });
+});

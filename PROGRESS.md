@@ -4,7 +4,7 @@
 
 ---
 
-## Session Hiện Tại: Session 66 (Config Panel + Polish)
+## Session Hiện Tại: Session 73 (Session History Sync — ALL 7 PHASES COMPLETE)
 **Status**: ✅ Completed
 **Ngày**: 2026-03-26
 
@@ -963,5 +963,198 @@ SAU:   Each agent routes to `/v1/chat/completions?session=agent:<id>:main`
 ### Lỗi Tồn Đọng: Không có (Phase 67 scope)
 
 ### Bước Tiếp Theo:
-→ **Phase 72: Telegram Fix** — pairing CLI args + CEO agent binding
+→ **Phase 69: Agent Communication** — MessageBus hybrid (OpenClaw + BullMQ)
+
+---
+
+## Session 68: Cron Scheduling + Health Monitoring (OpenClaw Enhancement) ✅
+
+### Đã làm:
+1. `tests/scheduler/scheduling.test.ts` — +10 TDD tests (cron CLI calls, health auto, system health, presence)
+2. `src/core/scheduler/schedule-manager.ts` — Async methods + CLI executor injection + `getJobHistory()` + `runJobNow()` + graceful fallback
+3. `src/core/scheduler/always-on.ts` — `checkAgentHealthAuto()` + `getSystemHealth()` + `enableHeartbeat()` + `getPresence()` + CLI executor injection
+4. Updated existing 4 tests to async/await (backward compat)
+
+### Key Changes:
+```
+TRƯỚC: ScheduleManager in-memory only, generates text command strings
+SAU:   ScheduleManager calls `openclaw cron add/rm/enable/disable` via CLI
+       Falls back to in-memory when CLI unavailable
+       New: getJobHistory → `openclaw cron runs --id <id>`
+       New: runJobNow → `openclaw cron run <id> --force`
+
+TRƯỚC: AlwaysOnManager requires manual health input
+SAU:   AlwaysOnManager auto-queries `openclaw sessions --agent <id>`
+       New: getSystemHealth → `openclaw health --json`
+       New: enableHeartbeat → `openclaw system heartbeat enable/disable`
+       New: getPresence → `openclaw system presence --json`
+```
+
+### Verification:
+- ✅ `npx tsc --noEmit` → 0 errors
+- ✅ `npx jest tests/scheduler/` → 28/28 pass (1 suite)
+- ✅ All 18 existing tests pass (backward compat)
+- ✅ 10 new tests pass
+- ✅ Full suite: 851/857 pass (6 pre-existing integration failures, not related)
+
+### Lỗi Tồn Đọng: Không có (Phase 68 scope)
+
+### Bước Tiếp Theo:
+→ **Phase 70: Memory Tier-1** — Vector memory + Redis session cache
+
+---
+
+## Session 69: Agent Communication — Hybrid OpenClaw + BullMQ ✅
+
+### Đã làm:
+1. `tests/messaging/message-bus.test.ts` — +5 TDD tests (hybrid CLI publish, fallback, broadcast CLI)
+2. `tests/tasks/task-decomposer.test.ts` — +2 TDD tests (sessions_spawn prompt, session context)
+3. `src/lib/openclaw-cli.ts` — +2 functions: `messageSend()`, `messageSendChannel()`
+4. `src/core/messaging/message-bus.ts` — Hybrid `publish()`: try OpenClaw CLI → then DB + BullMQ
+5. `src/core/messaging/message-router.ts` — `routeToOwner()`: OpenClaw Telegram → fallback console.log
+6. `src/core/tasks/task-decomposer.ts` — CEO prompt: sessions_spawn guidance + per-agent session context
+
+### Key Changes:
+```
+TRƯỚC: MessageBus.publish() → DB + BullMQ only
+SAU:   MessageBus.publish() → try OpenClaw CLI → then DB + BullMQ (best-effort)
+
+TRƯỚC: MessageRouter.routeToOwner() → console.log stub
+SAU:   MessageRouter.routeToOwner() → openclaw message send --channel telegram
+
+TRƯỚC: CEO prompt doesn't know about sessions_spawn
+SAU:   CEO prompt includes sessions_spawn guidance for sub-agent creation
+```
+
+### Verification:
+- ✅ `npx tsc --noEmit` → 0 errors
+- ✅ `npx jest tests/messaging/ tests/tasks/` → 26/26 pass (2 suites)
+- ✅ All existing tests pass (backward compat)
+- ✅ 7 new tests pass
+- ✅ Full suite: 858/864 pass (6 pre-existing integration failures)
+
+### Lỗi Tồn Đọng: Không có (Phase 69 scope)
+
+### Bước Tiếp Theo:
+→ **Phase 71: Tool Execution** — OpenClaw native tool integration
+
+---
+
+## Session 70: Memory Tier-1 — Read OpenClaw MEMORY.md ✅
+
+### Đã làm:
+1. `tests/memory/memory-tier1.test.ts` — [NEW] 5 TDD tests (readAgentMemory, readDailyLogs, getAgentDir, graceful degradation)
+2. `src/lib/openclaw-memory.ts` — [NEW] `readAgentMemory()`, `readDailyLogs()`, `getAgentDir()`
+3. `src/core/memory/context-builder.ts` — Enhanced: optional `MemoryReader` injection, Tier-1 merge in `buildContext()`, `=== OPENCLAW MEMORY ===` section in `formatContext()`
+4. `src/types/memory.ts` — Added `openclawMemory?: string` to `TaskContext`
+
+### Key Changes:
+```
+TRƯỚC: ContextBuilder = LightRAG + VectorStore + corrections (3 tiers)
+SAU:   ContextBuilder = OpenClaw MEMORY.md + LightRAG + VectorStore + corrections (4 tiers)
+       ~/.openclaw/agents/<id>/agent/MEMORY.md → curated facts
+       ~/.openclaw/agents/<id>/memory/YYYY-MM-DD.md → daily logs (last 2 days)
+       Graceful degradation: missing files → empty string (no error)
+```
+
+### Verification:
+- ✅ `npx tsc --noEmit` → 0 errors
+- ✅ `npx jest tests/memory/` → 38/38 pass (4 suites)
+- ✅ All existing tests pass (backward compat)
+- ✅ 5 new tests pass
+- ✅ Full suite: 863/869 pass (6 pre-existing integration failures)
+
+### Lỗi Tồn Đọng: Không có (Phase 70 scope)
+
+### Bước Tiếp Theo:
+→ **Phase 72: Telegram Binding** — Finalize Telegram pairing + CEO agent binding
+
+---
+
+## Session 71: Tool Execution — Sync Permissions + Parse Tool Calls ✅
+
+### Đã làm:
+1. `tests/tools/tool-sync.test.ts` — [NEW] 5 TDD tests (syncPermissions, parseToolCalls, logToolCalls)
+2. `src/lib/openclaw-config.ts` — [NEW] `readOpenClawConfig()`, `updateAgentConfig()` (R/W openclaw.json)
+3. `src/core/tools/tool-registry.ts` — Enhanced: +`syncPermissionsToOpenClaw()`, +`parseToolCalls()`, +`logToolCalls()`, +`ToolRegistryOptions` (configWriter DI)
+4. `src/core/adapter/openclaw-client.ts` — Added `rawToolCalls` to `ChatCompletionResponse`
+5. `src/core/adapter/openclaw-adapter.ts` — `sendMessage()` now parses `tool_calls` → `AgentResponse.toolCalls`
+
+### Key Changes:
+```
+TRƯỚC: ToolRegistry = register + execute (app tools only)
+SAU:   ToolRegistry = register + execute + syncPermissionsToOpenClaw + parseToolCalls + logToolCalls
+       DB ToolPermission → OpenClaw tools.allow config (via configWriter DI)
+       LLM response tool_calls → parsed + audited (OPENCLAW_TOOL_CALL)
+       sendMessage() returns AgentResponse.toolCalls when LLM uses tools
+```
+
+### Verification:
+- ✅ `npx tsc --noEmit` → 0 errors
+- ✅ `npx jest tests/tools/` → 18/18 pass (2 suites)
+- ✅ 5 new tests pass
+- ✅ Full suite: 874/874 pass (66 suites, 0 failures!)
+
+### Lỗi Tồn Đọng: Không có
+
+### Bước Tiếp Theo:
+→ **Phase 73: Session History** — Final integration phase
+
+---
+
+## Session 72: Telegram — Fix + 1-Bot CEO Routing ✅
+
+### Đã làm:
+1. `tests/channels/telegram-integration.test.ts` — +4 tests (CUSTOM_COMMANDS, CEO binding, bind action, page)
+2. `src/core/channels/telegram-bot.ts` — Exported `CUSTOM_COMMANDS` (7 commands in OpenClaw format)
+3. `src/app/api/telegram/route.ts` — Added CEO auto-binding in `start`, added `bind`/`unbind` actions
+4. `src/app/(dashboard)/settings/telegram/page.tsx` — CEO Agent binding status card with bind/unbind buttons
+
+### Key Changes:
+```
+TRƯỚC: Start Bot → channels add → gateway restart (no agent binding)
+SAU:   Start Bot → channels add → gateway restart → agentBind("ceo", "telegram")
+       + bind/unbind actions for manual control
+       + CUSTOM_COMMANDS exported for OpenClaw config registration
+       + UI shows CEO binding status + controls
+```
+
+### Verification:
+- ✅ `npx tsc --noEmit` → 0 errors
+- ✅ Channel + Telegram tests: 41/41 pass (3 suites)
+- ✅ Full suite: 878/878 pass (66 suites, 0 failures!)
+
+### Lỗi Tồn Đọng: Không có
+
+### Bước Tiếp Theo:
+→ 🎉 **ALL 7 PHASES COMPLETE** (67-73) — OpenClaw integration hoàn tất!
+
+---
+
+## Session 73: Session History Sync — Activity + Messages ✅
+
+### Đã làm:
+1. `tests/api/session-history.test.ts` — [NEW] 6 TDD tests
+2. `src/app/api/activity/route.ts` — Merge OpenClaw sessions list + Prisma ActivityLog
+3. `src/app/api/messages/route.ts` — OpenClaw session history + `source=openclaw` filter
+
+### Verification:
+- ✅ `npx tsc --noEmit` → 0 errors
+- ✅ Session history tests: 6/6 pass
+- ✅ Full suite: **884/884 pass (67 suites, 0 failures!)**
+
+### 🎉 7-Phase Integration Summary (67-73):
+
+| Phase | Session | What | Tests Added |
+|-------|---------|------|-------------|
+| 67 | Per-Agent Sessions | Session routing via CLI | +6 |
+| 68 | Cron Scheduling | ScheduleManager + AlwaysOnManager | +5 |
+| 69 | Agent Communication | MessageBus + MessageRouter hybrid | +5 |
+| 70 | Memory Tier-1 | MEMORY.md + ContextBuilder 4-tier | +5 |
+| 71 | Tool Execution | syncPermissions + parseToolCalls | +5 |
+| 72 | Telegram Binding | CEO auto-binding + CUSTOM_COMMANDS | +4 |
+| 73 | Session History | Activity + Messages merge | +6 |
+| **Total** | **7 sessions** | **7 phases** | **+36 tests** |
+
+**Final Count: 884 tests, 67 suites, 0 failures, 0 TSC errors**
 

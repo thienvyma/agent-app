@@ -19,8 +19,8 @@ describe("ScheduleManager (WRAP OpenClaw cron)", () => {
   });
 
   describe("registerJob", () => {
-    it("should register a cron job and return command for OpenClaw", () => {
-      const result = manager.registerJob({
+    it("should register a cron job and return command for OpenClaw", async () => {
+      const result = await manager.registerJob({
         name: "CEO daily check",
         cronExpression: "0 6 * * *",
         agentId: "ceo-001",
@@ -34,9 +34,9 @@ describe("ScheduleManager (WRAP OpenClaw cron)", () => {
   });
 
   describe("listJobs", () => {
-    it("should list all registered jobs", () => {
-      manager.registerJob({ name: "j1", cronExpression: "0 6 * * *", agentId: "ceo", taskTemplate: "t1" });
-      manager.registerJob({ name: "j2", cronExpression: "0 17 * * *", agentId: "ceo", taskTemplate: "t2" });
+    it("should list all registered jobs", async () => {
+      await manager.registerJob({ name: "j1", cronExpression: "0 6 * * *", agentId: "ceo", taskTemplate: "t1" });
+      await manager.registerJob({ name: "j2", cronExpression: "0 17 * * *", agentId: "ceo", taskTemplate: "t2" });
 
       const jobs = manager.listJobs();
       expect(jobs).toHaveLength(2);
@@ -44,22 +44,22 @@ describe("ScheduleManager (WRAP OpenClaw cron)", () => {
   });
 
   describe("removeJob", () => {
-    it("should remove a job by id", () => {
-      const { jobId } = manager.registerJob({ name: "temp", cronExpression: "* * * * *", agentId: "ceo", taskTemplate: "t" });
-      manager.removeJob(jobId);
+    it("should remove a job by id", async () => {
+      const { jobId } = await manager.registerJob({ name: "temp", cronExpression: "* * * * *", agentId: "ceo", taskTemplate: "t" });
+      await manager.removeJob(jobId);
 
       expect(manager.listJobs()).toHaveLength(0);
     });
   });
 
   describe("pauseJob / resumeJob", () => {
-    it("should toggle job enabled state", () => {
-      const { jobId } = manager.registerJob({ name: "j1", cronExpression: "0 6 * * *", agentId: "ceo", taskTemplate: "t" });
+    it("should toggle job enabled state", async () => {
+      const { jobId } = await manager.registerJob({ name: "j1", cronExpression: "0 6 * * *", agentId: "ceo", taskTemplate: "t" });
 
-      manager.pauseJob(jobId);
+      await manager.pauseJob(jobId);
       expect(manager.listJobs()[0]!.enabled).toBe(false);
 
-      manager.resumeJob(jobId);
+      await manager.resumeJob(jobId);
       expect(manager.listJobs()[0]!.enabled).toBe(true);
     });
   });
@@ -206,6 +206,186 @@ describe("DailyReportGenerator (BUILD)", () => {
       expect(text).toContain("📊");
       expect(text).toContain("10");
       expect(text).toContain("30000");
+    });
+  });
+});
+
+// ============================================================
+// Session 68: OpenClaw Cron + Health Enhancement Tests
+// ============================================================
+
+describe("ScheduleManager (OpenClaw Cron Enhancement)", () => {
+  let manager: ScheduleManager;
+  let mockCli: jest.Mock;
+
+  beforeEach(() => {
+    mockCli = jest.fn().mockResolvedValue({ stdout: "", stderr: "", exitCode: 0 });
+    manager = new ScheduleManager({ cliExecutor: mockCli });
+  });
+
+  describe("registerJob with CLI", () => {
+    it("should call cronAdd via CLI when executor provided", async () => {
+      mockCli.mockResolvedValue({ stdout: '{"id":"cron-1"}', stderr: "", exitCode: 0, json: { id: "cron-1" } });
+
+      const result = await manager.registerJob({
+        name: "CEO daily check",
+        cronExpression: "0 6 * * *",
+        agentId: "ceo-001",
+        taskTemplate: "Check email and report",
+      });
+
+      expect(result.jobId).toBeDefined();
+      expect(mockCli).toHaveBeenCalledWith(
+        expect.arrayContaining(["cron", "add"]),
+        expect.any(Number)
+      );
+    });
+  });
+
+  describe("removeJob with CLI", () => {
+    it("should call cronRemove via CLI when executor provided", async () => {
+      mockCli.mockResolvedValue({ stdout: '{"id":"cron-1"}', stderr: "", exitCode: 0, json: { id: "cron-1" } });
+      const { jobId } = await manager.registerJob({
+        name: "temp", cronExpression: "* * * * *", agentId: "ceo", taskTemplate: "t",
+      });
+
+      await manager.removeJob(jobId);
+
+      expect(mockCli).toHaveBeenCalledWith(
+        expect.arrayContaining(["cron", "rm"]),
+        expect.any(Number)
+      );
+    });
+  });
+
+  describe("pauseJob / resumeJob with CLI", () => {
+    it("should call cronDisable and cronEnable via CLI", async () => {
+      mockCli.mockResolvedValue({ stdout: '{"id":"cron-1"}', stderr: "", exitCode: 0, json: { id: "cron-1" } });
+      const { jobId } = await manager.registerJob({
+        name: "j1", cronExpression: "0 6 * * *", agentId: "ceo", taskTemplate: "t",
+      });
+
+      await manager.pauseJob(jobId);
+      expect(mockCli).toHaveBeenCalledWith(
+        expect.arrayContaining(["cron", "disable"]),
+        expect.any(Number)
+      );
+
+      await manager.resumeJob(jobId);
+      expect(mockCli).toHaveBeenCalledWith(
+        expect.arrayContaining(["cron", "enable"]),
+        expect.any(Number)
+      );
+    });
+  });
+
+  describe("getJobHistory", () => {
+    it("should return cron run history from CLI", async () => {
+      mockCli.mockResolvedValue({
+        stdout: '{"runs":[{"id":"run-1","status":"ok","timestamp":"2026-03-26T10:00:00Z"}]}',
+        stderr: "", exitCode: 0,
+        json: { runs: [{ id: "run-1", status: "ok", timestamp: "2026-03-26T10:00:00Z" }] },
+      });
+
+      const history = await manager.getJobHistory("cron-1");
+      expect(history).toBeDefined();
+      expect(Array.isArray(history)).toBe(true);
+      expect(mockCli).toHaveBeenCalledWith(
+        expect.arrayContaining(["cron", "runs"]),
+        expect.any(Number)
+      );
+    });
+  });
+
+  describe("runJobNow", () => {
+    it("should trigger immediate job execution via CLI", async () => {
+      mockCli.mockResolvedValue({ stdout: '{"status":"triggered"}', stderr: "", exitCode: 0, json: { status: "triggered" } });
+
+      const result = await manager.runJobNow("cron-1");
+      expect(result.success).toBe(true);
+      expect(mockCli).toHaveBeenCalledWith(
+        expect.arrayContaining(["cron", "run"]),
+        expect.any(Number)
+      );
+    });
+  });
+
+  describe("graceful fallback", () => {
+    it("should still work in-memory when CLI fails", async () => {
+      mockCli.mockRejectedValue(new Error("CLI not found"));
+
+      const result = await manager.registerJob({
+        name: "fallback job", cronExpression: "0 9 * * *", agentId: "ceo-001", taskTemplate: "Test",
+      });
+
+      expect(result.jobId).toBeDefined();
+      expect(manager.listJobs()).toHaveLength(1);
+    });
+  });
+});
+
+describe("AlwaysOnManager (OpenClaw Health Enhancement)", () => {
+  let manager: AlwaysOnManager;
+  let mockCli: jest.Mock;
+
+  beforeEach(() => {
+    mockCli = jest.fn().mockResolvedValue({ stdout: "", stderr: "", exitCode: 0 });
+    manager = new AlwaysOnManager({ cliExecutor: mockCli });
+  });
+
+  describe("checkAgentHealthAuto", () => {
+    it("should auto-query OpenClaw sessions and return health", async () => {
+      mockCli.mockResolvedValue({
+        stdout: '{"sessions":[{"key":"agent:ceo:main","active":true}]}',
+        stderr: "", exitCode: 0,
+        json: { sessions: [{ key: "agent:ceo:main", active: true }] },
+      });
+
+      const result = await manager.checkAgentHealthAuto("ceo");
+      expect(result.status).toBe("healthy");
+      expect(mockCli).toHaveBeenCalledWith(
+        expect.arrayContaining(["sessions"]),
+        expect.any(Number)
+      );
+    });
+
+    it("should detect no-session agent as crashed", async () => {
+      mockCli.mockResolvedValue({
+        stdout: '{"sessions":[]}', stderr: "", exitCode: 0,
+        json: { sessions: [] },
+      });
+
+      const result = await manager.checkAgentHealthAuto("missing-agent");
+      expect(result.status).toBe("crashed");
+      expect(result.action).toBe("restart");
+    });
+  });
+
+  describe("getSystemHealth", () => {
+    it("should return parsed system health from CLI", async () => {
+      mockCli.mockResolvedValue({
+        stdout: '{"status":"ok","services":{"gateway":"running","ollama":"running"}}',
+        stderr: "", exitCode: 0,
+        json: { status: "ok", services: { gateway: "running", ollama: "running" } },
+      });
+
+      const health = await manager.getSystemHealth();
+      expect(health.status).toBe("ok");
+      expect(health.services).toBeDefined();
+    });
+  });
+
+  describe("getPresence", () => {
+    it("should return agent presence from CLI", async () => {
+      mockCli.mockResolvedValue({
+        stdout: '{"agents":[{"id":"ceo","online":true}]}',
+        stderr: "", exitCode: 0,
+        json: { agents: [{ id: "ceo", online: true }] },
+      });
+
+      const presence = await manager.getPresence();
+      expect(presence).toBeDefined();
+      expect(Array.isArray(presence)).toBe(true);
     });
   });
 });

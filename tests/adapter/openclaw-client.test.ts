@@ -223,7 +223,7 @@ describe("OpenClawClient", () => {
       const client = new OpenClawClient();
       const result = await client.healthCheck();
       expect(result).toBe(true);
-      expect(instance.get).toHaveBeenCalledWith("/v1/models");
+      expect(instance.get).toHaveBeenCalledWith("/v1/models", { timeout: 5_000 });
     });
 
     it("returns false on connection error", async () => {

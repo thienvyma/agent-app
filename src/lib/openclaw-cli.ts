@@ -462,3 +462,64 @@ export async function sessionsList(agentId?: string): Promise<CliResult> {
   return execOpenClaw(args);
 }
 
+/**
+ * Bind an agent to a channel (e.g., Telegram).
+ *
+ * Sets config: bindings[] with agentId and channel match.
+ *
+ * @param agentId - Agent to bind (e.g., "ceo")
+ * @param channel - Channel name (e.g., "telegram")
+ */
+export async function agentBind(agentId: string, channel: string): Promise<CliResult> {
+  const bindingJson = JSON.stringify({
+    agentId,
+    match: { channel, accountId: "default" },
+  });
+  return execOpenClaw(["config", "set", "bindings", bindingJson], 15_000);
+}
+
+/**
+ * Unbind an agent from a channel.
+ *
+ * @param agentId - Agent to unbind
+ * @param channel - Channel name
+ */
+export async function agentUnbind(agentId: string, channel: string): Promise<CliResult> {
+  return execOpenClaw(
+    ["config", "unset", `bindings.${agentId}.${channel}`],
+    15_000
+  );
+}
+
+/**
+ * Get all agent bindings.
+ */
+export async function agentBindings(): Promise<CliResult> {
+  return execOpenClaw(["config", "get", "bindings", "--json"]);
+}
+
+/**
+ * Send a message to an agent via OpenClaw messaging.
+ *
+ * @param agentId - Target agent ID
+ * @param message - Message content to send
+ */
+export async function messageSend(agentId: string, message: string): Promise<CliResult> {
+  return execOpenClaw(
+    ["message", "send", "--agent", agentId, "--message", message],
+    30_000
+  );
+}
+
+/**
+ * Send a message via a specific channel (e.g., Telegram).
+ *
+ * @param channel - Channel name (e.g., "telegram")
+ * @param message - Message content
+ */
+export async function messageSendChannel(channel: string, message: string): Promise<CliResult> {
+  return execOpenClaw(
+    ["message", "send", "--channel", channel, "--message", message],
+    30_000
+  );
+}

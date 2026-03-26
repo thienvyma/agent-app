@@ -83,4 +83,6 @@ export interface TaskContext {
   corrections: VectorResult[];
   /** Whether LightRAG was available */
   lightragAvailable: boolean;
+  /** OpenClaw Tier-1 memory (MEMORY.md + daily logs) */
+  openclawMemory?: string;
 }

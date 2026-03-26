@@ -16,6 +16,20 @@
 
 import type { NotificationService } from "@/core/channels/notification-service";
 
+/**
+ * Custom commands for OpenClaw Telegram channel config.
+ * Matches the `customCommands` format in openclaw.json.
+ */
+export const CUSTOM_COMMANDS = [
+  { command: "status", description: "System overview" },
+  { command: "task", description: "Giao việc cho CEO" },
+  { command: "report", description: "Báo cáo ngày" },
+  { command: "cost", description: "Chi phí token" },
+  { command: "agents", description: "Danh sách agents" },
+  { command: "approve", description: "Duyệt yêu cầu" },
+  { command: "reject", description: "Từ chối yêu cầu" },
+];
+
 /** Bot dependencies (injected) */
 export interface BotDependencies {
   notificationService: NotificationService;

@@ -60,13 +60,13 @@ export class OpenClawAdapter implements IAgentEngine {
 
     // Register in OpenClaw via CLI (best-effort)
     try {
-      await execOpenClaw(["agents", "add", config.id], 15_000);
+      await execOpenClaw(["agents", "add", config.id], 5_000);
     } catch {
-      // Fallback: in-memory only (gateway may be offline)
+      // CLI failed — fallback to in-memory cache only
       console.warn(`[OpenClawAdapter] CLI agents add failed for ${config.id}, using cache-only`);
     }
 
-    // Always register in cache
+    // Register in cache
     this.agents.set(config.id, {
       config,
       deployedAt: new Date(),
@@ -97,7 +97,7 @@ export class OpenClawAdapter implements IAgentEngine {
 
     // Remove from OpenClaw via CLI (best-effort)
     try {
-      await execOpenClaw(["agents", "delete", agentId], 15_000);
+      await execOpenClaw(["agents", "delete", agentId], 5_000);
     } catch {
       console.warn(`[OpenClawAdapter] CLI agents delete failed for ${agentId}`);
     }
@@ -174,11 +174,29 @@ export class OpenClawAdapter implements IAgentEngine {
     // Update internal token tracking
     registration.tokenUsage += response.tokenUsed;
 
+    // Parse tool_calls if present in response (Phase 71)
+    const toolCalls = response.rawToolCalls?.map((tc) => {
+      const fn = tc.function as Record<string, string> | undefined;
+      let args: Record<string, unknown> = {};
+      try {
+        args = JSON.parse(fn?.arguments ?? "{}") as Record<string, unknown>;
+      } catch {
+        args = {};
+      }
+      return {
+        toolName: fn?.name ?? "",
+        input: args,
+        output: null as unknown,
+        success: true,
+      };
+    });
+
     return {
       agentId,
       message: response.message,
       tokenUsed: response.tokenUsed,
       timestamp: new Date(),
+      ...(toolCalls && toolCalls.length > 0 ? { toolCalls } : {}),
     };
   }
 

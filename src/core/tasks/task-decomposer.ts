@@ -60,7 +60,9 @@ export class TaskDecomposer {
     companyId: string
   ): Promise<DecompositionPlan> {
     // 1. Ask CEO to analyze and decompose
-    const prompt = `Phân tích và chia nhỏ task sau thành các sub-task. 
+    const prompt = `Phân tích và chia nhỏ task sau thành các sub-task.
+Nếu cần, sử dụng sessions_spawn để tạo sub-agent session cho mỗi sub-task.
+Mỗi sub-agent sẽ nhận context riêng qua per-agent session.
 Trả về JSON: { "subTasks": [{ "description": "...", "role": "marketing|finance|design|support|hr", "priority": 1 }] }
 
 Task: ${taskDescription}`;
@@ -146,10 +148,10 @@ Task: ${taskDescription}`;
       },
     });
 
-    // Send task to agent
+    // Send task to agent with per-agent session context
     await this.engine.sendMessage(
       agentId,
-      `Bạn được giao task: ${description}. Hãy thực hiện và trả về kết quả.`
+      `Bạn được giao task trong session riêng: ${description}. Hãy thực hiện và trả về kết quả.`
     );
 
     // Audit

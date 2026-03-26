@@ -105,24 +105,22 @@ describe("OnboardExecutor", () => {
   // ── Step 4: startGateway ──
 
   describe("startGateway", () => {
-    it("calls controlGateway start and returns running=true", async () => {
-      mockedCli.controlGateway.mockResolvedValue({
-        stdout: "Gateway started on port 18789",
-        stderr: "",
-        exitCode: 0,
-      });
+    it("calls startGatewayBackground and returns running=true", async () => {
+      mockedCli.startGatewayBackground.mockResolvedValue(true);
+      mockedCli.configGet.mockResolvedValue({ stdout: "existing-token", stderr: "", exitCode: 0 });
+      mockedCli.configSet.mockResolvedValue({ stdout: "Updated", stderr: "", exitCode: 0 });
+      mockedCli.execOpenClaw.mockResolvedValue({ stdout: "", stderr: "", exitCode: 1 });
 
       const result = await executor.startGateway(18789);
       expect(result.running).toBe(true);
-      expect(mockedCli.controlGateway).toHaveBeenCalledWith("start");
+      expect(mockedCli.startGatewayBackground).toHaveBeenCalledWith(18789);
     });
 
     it("returns running=true if already running (not error)", async () => {
-      mockedCli.controlGateway.mockResolvedValue({
-        stdout: "Gateway already running",
-        stderr: "",
-        exitCode: 0,
-      });
+      mockedCli.startGatewayBackground.mockResolvedValue(true);
+      mockedCli.configGet.mockResolvedValue({ stdout: "my-token", stderr: "", exitCode: 0 });
+      mockedCli.configSet.mockResolvedValue({ stdout: "Updated", stderr: "", exitCode: 0 });
+      mockedCli.execOpenClaw.mockResolvedValue({ stdout: "", stderr: "", exitCode: 1 });
 
       const result = await executor.startGateway();
       expect(result.running).toBe(true);

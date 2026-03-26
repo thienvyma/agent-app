@@ -223,3 +223,60 @@ describe("ErrorRecovery", () => {
     });
   });
 });
+
+// ============================================================
+// Session 69: CEO sessions_spawn prompt Enhancement Tests
+// ============================================================
+
+describe("TaskDecomposer (CEO sessions_spawn Enhancement)", () => {
+  let decomposer: TaskDecomposer;
+  let mockEngine: jest.Mocked<IAgentEngine>;
+  let mockHierarchy: ReturnType<typeof createMockHierarchy>;
+  let mockDb: ReturnType<typeof createMockDb>;
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockEngine = createMockEngine();
+    mockHierarchy = createMockHierarchy();
+    mockDb = createMockDb();
+    decomposer = new TaskDecomposer(mockEngine, mockHierarchy as never, mockDb as never);
+  });
+
+  it("should include sessions_spawn guidance in CEO decomposition prompt", async () => {
+    mockEngine.sendMessage.mockResolvedValue({
+      agentId: "agent-ceo-001",
+      message: JSON.stringify({
+        subTasks: [{ description: "Test task", role: "marketing", priority: 1 }],
+      }),
+      tokenUsed: 50,
+      timestamp: new Date(),
+    });
+    mockHierarchy.findAgentsByRole.mockResolvedValue([{ id: "a-mkt", name: "Mkt", role: "marketing" }]);
+    mockDb.task.create
+      .mockResolvedValueOnce({ id: "parent-1", description: "Parent", status: "PENDING" })
+      .mockResolvedValueOnce({ id: "sub-1", description: "Sub", status: "PENDING" });
+    mockDb.auditLog.create.mockResolvedValue({});
+
+    await decomposer.decompose("Some complex task", "agent-ceo-001", "co-1");
+
+    // CEO prompt should include sessions_spawn guidance
+    expect(mockEngine.sendMessage).toHaveBeenCalledWith(
+      "agent-ceo-001",
+      expect.stringContaining("sessions_spawn")
+    );
+  });
+
+  it("should include per-agent session context in assignTask prompt", async () => {
+    mockDb.task.update.mockResolvedValue({});
+    mockEngine.sendMessage.mockResolvedValue({ agentId: "a-mkt", message: "OK", tokenUsed: 10, timestamp: new Date() });
+    mockDb.auditLog.create.mockResolvedValue({});
+
+    await decomposer.assignTask("task-1", "a-mkt", "Viết content marketing");
+
+    // assignTask prompt should mention session context
+    expect(mockEngine.sendMessage).toHaveBeenCalledWith(
+      "a-mkt",
+      expect.stringContaining("session")
+    );
+  });
+});

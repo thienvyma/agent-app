@@ -152,6 +152,40 @@ export default function TelegramSettingsPage() {
         </div>
       </div>
 
+      {/* CEO Agent Binding */}
+      <div className="p-5 rounded-xl bg-[#111827] border border-[#1E2535]">
+        <h3 className="text-sm font-semibold text-white flex items-center gap-2 mb-3">
+          <Bot className="w-4 h-4 text-violet-400" />
+          CEO Agent binding
+        </h3>
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-xs text-gray-400">
+              All Telegram DMs are routed to the CEO agent, who delegates tasks to sub-agents.
+            </p>
+            <p className="text-xs text-gray-500 mt-1 font-mono">
+              binding: ceo → telegram (default)
+            </p>
+          </div>
+          <div className="flex gap-2">
+            <button
+              onClick={() => doAction("bind", { agentId: "ceo" })}
+              disabled={actionLoading === "bind"}
+              className="px-3 py-1.5 bg-violet-500/15 hover:bg-violet-500/25 border border-violet-500/30 text-violet-400 rounded-lg text-xs font-medium transition-all disabled:opacity-40"
+            >
+              Bind CEO
+            </button>
+            <button
+              onClick={() => doAction("unbind", { agentId: "ceo" })}
+              disabled={actionLoading === "unbind"}
+              className="px-3 py-1.5 bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 text-red-400 rounded-lg text-xs font-medium transition-all disabled:opacity-40"
+            >
+              Unbind
+            </button>
+          </div>
+        </div>
+      </div>
+
       {/* Token Config */}
       <div className="p-5 rounded-xl bg-[#111827] border border-[#1E2535]">
         <h3 className="text-sm font-semibold text-white flex items-center gap-2 mb-4">
@@ -298,6 +332,26 @@ export default function TelegramSettingsPage() {
           )}
           Refresh pairing list
         </button>
+      </div>
+
+      {/* Registered Bot Commands */}
+      <div className="p-5 rounded-xl bg-[#111827] border border-[#1E2535]">
+        <h3 className="text-sm font-semibold text-white flex items-center gap-2 mb-3">
+          <Terminal className="w-4 h-4 text-cyan-400" />
+          Registered Bot commands
+        </h3>
+        <div className="space-y-1.5">
+          {[
+            { cmd: "/start", desc: "Start bot and get pairing code" },
+            { cmd: "/status", desc: "Check agent status" },
+            { cmd: "/help", desc: "Show available commands" },
+          ].map((c) => (
+            <div key={c.cmd} className="flex items-center gap-3 text-xs">
+              <span className="text-blue-400 font-mono w-20">{c.cmd}</span>
+              <span className="text-gray-400">{c.desc}</span>
+            </div>
+          ))}
+        </div>
       </div>
 
       {/* Setup Guide */}

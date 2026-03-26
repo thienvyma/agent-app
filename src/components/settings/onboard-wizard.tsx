@@ -53,12 +53,35 @@ export function OnboardWizard({ onComplete }: OnboardWizardProps) {
   const [error, setError] = useState<string | null>(null);
   const [stepResults, setStepResults] = useState<Record<string, unknown>>({});
 
-  // Form state (pre-filled defaults from Huong_Dan_Ket_Noi_Qwen.md)
+  // Provider presets for quick cloud/local API setup
+  const PROVIDER_PRESETS = [
+    { label: "Gemini (Google AI)", name: "gemini", baseUrl: "https://generativelanguage.googleapis.com/v1beta/openai", apiKeyHint: "AIza...", defaultModel: "gemini-2.5-flash" },
+    { label: "OpenAI", name: "openai", baseUrl: "https://api.openai.com/v1", apiKeyHint: "sk-...", defaultModel: "gpt-4o" },
+    { label: "OpenRouter", name: "openrouter", baseUrl: "https://openrouter.ai/api/v1", apiKeyHint: "sk-or-...", defaultModel: "google/gemini-2.5-flash" },
+    { label: "Ollama (Local)", name: "ollama", baseUrl: "http://localhost:11434/v1", apiKeyHint: "sk-local", defaultModel: "qwen2.5:7b" },
+    { label: "Ollama (LAN)", name: "ollama-lan", baseUrl: "http://192.168.1.35:8080/v1", apiKeyHint: "sk-local", defaultModel: "Qwen3.5-35B-A3B-Coder" },
+    { label: "Custom", name: "custom", baseUrl: "", apiKeyHint: "", defaultModel: "" },
+  ];
+
+  // Form state
+  const [selectedPreset, setSelectedPreset] = useState("ollama-lan");
   const [providerName, setProviderName] = useState("ollama-lan");
   const [baseUrl, setBaseUrl] = useState("http://192.168.1.35:8080/v1");
   const [apiKey, setApiKey] = useState("sk-local");
   const [model, setModel] = useState("Qwen3.5-35B-A3B-Coder");
   const [availableModels, setAvailableModels] = useState<string[]>([]);
+
+  /** Apply preset values when user selects a provider */
+  const applyPreset = (presetName: string) => {
+    setSelectedPreset(presetName);
+    const preset = PROVIDER_PRESETS.find((p) => p.name === presetName);
+    if (preset && preset.name !== "custom") {
+      setProviderName(preset.name);
+      setBaseUrl(preset.baseUrl);
+      setApiKey(preset.apiKeyHint === "sk-local" ? "sk-local" : "");
+      setModel(preset.defaultModel);
+    }
+  };
 
   const steps: Step[] = [
     { id: "check", label: "Check", status: currentStep > 0 ? "complete" : currentStep === 0 ? "active" : "pending" },
@@ -131,6 +154,16 @@ export function OnboardWizard({ onComplete }: OnboardWizardProps) {
     outline: "none",
   };
 
+  const selectStyle: React.CSSProperties = {
+    ...inputStyle,
+    cursor: "pointer",
+    appearance: "none" as const,
+    backgroundImage: "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E\")",
+    backgroundRepeat: "no-repeat",
+    backgroundPosition: "right 12px center",
+    paddingRight: 32,
+  };
+
   const btnPrimary: React.CSSProperties = {
     padding: "10px 24px",
     background: "linear-gradient(135deg, #3b82f6, #2563eb)",
@@ -177,7 +210,19 @@ export function OnboardWizard({ onComplete }: OnboardWizardProps) {
       case 1: // Provider setup
         return (
           <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-            <p style={{ color: "#94a3b8" }}>Cấu hình kết nối tới AI server.</p>
+            <p style={{ color: "#94a3b8" }}>Chọn AI provider hoặc nhập thủ công.</p>
+            <div>
+              <label style={labelStyle}>Provider Preset</label>
+              <select
+                style={selectStyle}
+                value={selectedPreset}
+                onChange={(e) => applyPreset(e.target.value)}
+              >
+                {PROVIDER_PRESETS.map((p) => (
+                  <option key={p.name} value={p.name}>{p.label}</option>
+                ))}
+              </select>
+            </div>
             <div>
               <label style={labelStyle}>Provider Name</label>
               <input style={inputStyle} value={providerName} onChange={(e) => setProviderName(e.target.value)} />
@@ -187,8 +232,21 @@ export function OnboardWizard({ onComplete }: OnboardWizardProps) {
               <input style={inputStyle} value={baseUrl} onChange={(e) => setBaseUrl(e.target.value)} />
             </div>
             <div>
-              <label style={labelStyle}>API Key</label>
-              <input style={inputStyle} value={apiKey} onChange={(e) => setApiKey(e.target.value)} />
+              <label style={labelStyle}>
+                API Key
+                {PROVIDER_PRESETS.find((p) => p.name === selectedPreset)?.apiKeyHint && (
+                  <span style={{ color: "#64748b", fontWeight: 400 }}>
+                    {" "}(format: {PROVIDER_PRESETS.find((p) => p.name === selectedPreset)?.apiKeyHint})
+                  </span>
+                )}
+              </label>
+              <input
+                style={inputStyle}
+                type="password"
+                value={apiKey}
+                onChange={(e) => setApiKey(e.target.value)}
+                placeholder={PROVIDER_PRESETS.find((p) => p.name === selectedPreset)?.apiKeyHint ?? ""}
+              />
             </div>
             <button
               style={btnPrimary}

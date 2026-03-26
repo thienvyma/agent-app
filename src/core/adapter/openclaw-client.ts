@@ -44,6 +44,8 @@ export interface ChatCompletionRequest {
 export interface ChatCompletionResponse {
   message: string;
   tokenUsed: number;
+  /** Raw tool_calls from OpenAI response, if any */
+  rawToolCalls?: Array<Record<string, unknown>>;
 }
 
 /**
@@ -123,8 +125,11 @@ export class OpenClawClient {
     const message =
       choices.length > 0 ? (choices[0]?.message?.content ?? "") : "";
     const tokenUsed = data?.usage?.total_tokens ?? 0;
+    const rawCalls = choices.length > 0
+      ? (choices[0]?.message?.tool_calls as Array<Record<string, unknown>> | undefined)
+      : undefined;
 
-    return { message, tokenUsed };
+    return { message, tokenUsed, rawToolCalls: rawCalls ?? undefined };
   }
 
   /**
@@ -134,7 +139,7 @@ export class OpenClawClient {
    */
   async healthCheck(): Promise<boolean> {
     try {
-      await this.http.get("/v1/models");
+      await this.http.get("/v1/models", { timeout: HEALTH_TIMEOUT });
       return true;
     } catch {
       return false;

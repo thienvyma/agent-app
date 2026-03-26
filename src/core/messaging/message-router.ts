@@ -7,6 +7,8 @@
  * - ESCALATION: route to CEO agent
  * - REPORT: route back to sender's supervisor
  *
+ * Enhanced (S69): routeToOwner sends via OpenClaw Telegram channel.
+ *
  * @module core/messaging/message-router
  */
 
@@ -15,14 +17,33 @@ import type { MessageBus } from "@/core/messaging/message-bus";
 import { MessageType } from "@prisma/client";
 import type { BusMessage } from "@/types/message";
 
+/** CLI executor function type */
+type CliExecutor = (args: string[], timeoutMs: number) => Promise<{
+  stdout: string;
+  stderr: string;
+  exitCode: number;
+  json?: unknown;
+}>;
+
+/** MessageRouter configuration */
+interface MessageRouterConfig {
+  /** Optional CLI executor for OpenClaw Telegram messaging */
+  cliExecutor?: CliExecutor;
+}
+
 /**
  * Routes messages to agents based on intent and hierarchy.
  */
 export class MessageRouter {
+  private cli?: CliExecutor;
+
   constructor(
     private readonly hierarchy: HierarchyEngine,
-    private readonly messageBus: MessageBus
-  ) {}
+    private readonly messageBus: MessageBus,
+    config?: MessageRouterConfig
+  ) {
+    this.cli = config?.cliExecutor;
+  }
 
   /**
    * Route a message based on its type.
@@ -176,13 +197,25 @@ export class MessageRouter {
   }
 
   /**
-   * Route to owner (placeholder for Phase 20 Telegram integration).
+   * Route to owner via OpenClaw Telegram channel.
+   * Falls back to console.log if CLI is unavailable.
    *
    * @param content - Message to send to owner
    * @param agentId - Agent requesting owner attention
    */
   async routeToOwner(content: string, agentId: string): Promise<void> {
-    // Phase 20: will send via Telegram
+    if (this.cli) {
+      try {
+        await this.cli(
+          ["message", "send", "--channel", "telegram", "--message", `[${agentId}] ${content}`],
+          30_000
+        );
+        return;
+      } catch {
+        // CLI failed — fallback to console.log
+      }
+    }
+
     console.log(
       `[MessageRouter] Owner notification from ${agentId}: ${content}`
     );

@@ -1,15 +1,13 @@
 /**
- * Telegram Startup — initializes real Telegram Bot when token is available.
+ * Telegram Startup — DEPRECATED (Phase 72).
  *
- * Features:
- * - Checks TELEGRAM_BOT_TOKEN env var
- * - Wires 7 commands to TelegramBot handlers
- * - Supports polling (dev) and webhook (production) modes
- * - Graceful skip when no token is configured
+ * OpenClaw now handles Telegram natively via its gateway channel system.
+ * This module is kept for backwards compatibility but does NOT create
+ * a grammY Bot instance. Use OpenClaw `channels add --channel telegram`
+ * instead.
  *
- * Usage:
- *   import { initTelegram, getTelegramStatus } from "@/lib/telegram-startup";
- *   const result = initTelegram(); // call on app start
+ * @deprecated Use OpenClaw channel system instead.
+ * @see docs/phases/phase-72-telegram-binding/README.md
  *
  * @module lib/telegram-startup
  */

@@ -2,11 +2,12 @@
  * ContextBuilder — assembles task context from multiple memory tiers.
  *
  * Combines:
- * 1. LightRAG (graph-enhanced knowledge)
- * 2. VectorStore (past conversations — episodic memory)
- * 3. VectorStore (corrections — procedural memory)
+ * 1. OpenClaw MEMORY.md (Tier 1 — curated agent facts + daily logs)
+ * 2. LightRAG (graph-enhanced knowledge)
+ * 3. VectorStore (past conversations — episodic memory)
+ * 4. VectorStore (corrections — procedural memory)
  *
- * Graceful degradation: if LightRAG is down → VectorStore-only mode.
+ * Graceful degradation: if any tier is down → partial context.
  *
  * @module core/memory/context-builder
  */
@@ -18,16 +19,27 @@ import type { EmbeddingService } from "@/core/memory/embedding-service";
 import { VectorType } from "@/types/memory";
 import type { TaskContext, VectorResult, LightRAGResult } from "@/types/memory";
 
+/** Memory reader interface for OpenClaw Tier-1 */
+export interface MemoryReader {
+  readAgentMemory(agentId: string): Promise<string>;
+  readDailyLogs(agentId: string, days?: number): Promise<string>;
+}
+
 /**
  * Builds structured context for agent tasks.
  */
 export class ContextBuilder {
+  private memoryReader?: MemoryReader;
+
   constructor(
     private readonly lightrag: LightRAGClient,
     private readonly vectorStore: VectorStore,
     private readonly embedService: EmbeddingService,
-    private readonly db: PrismaClient
-  ) {}
+    private readonly db: PrismaClient,
+    memoryReader?: MemoryReader
+  ) {
+    this.memoryReader = memoryReader;
+  }
 
   /**
    * Build complete task context by querying all memory tiers.
@@ -50,26 +62,42 @@ export class ContextBuilder {
       throw new Error(`Agent ${agentId} not found`);
     }
 
-    // 2. Check LightRAG availability
+    // 2. Read OpenClaw Tier-1 memory (best-effort)
+    let openclawMemory = "";
+    if (this.memoryReader) {
+      try {
+        const curatedMemory = await this.memoryReader.readAgentMemory(agentId);
+        const dailyLogs = await this.memoryReader.readDailyLogs(agentId, 2);
+
+        const parts: string[] = [];
+        if (curatedMemory) parts.push(curatedMemory);
+        if (dailyLogs) parts.push(dailyLogs);
+        openclawMemory = parts.join("\n\n---\n\n");
+      } catch {
+        // Graceful degradation: Tier-1 unavailable
+      }
+    }
+
+    // 3. Check LightRAG availability
     const lightragAvailable = await this.lightrag.healthCheck();
 
-    // 3. Query LightRAG (graph-enhanced knowledge)
+    // 4. Query LightRAG (graph-enhanced knowledge)
     let knowledgeResults: LightRAGResult[] = [];
     if (lightragAvailable) {
       knowledgeResults = await this.lightrag.query(taskDescription, "hybrid");
     }
 
-    // 4. Embed task description for vector search
+    // 5. Embed task description for vector search
     const taskEmbedding = await this.embedService.embed(taskDescription);
 
-    // 5. Search past conversations (episodic memory)
+    // 6. Search past conversations (episodic memory)
     const pastExperience: VectorResult[] = await this.vectorStore.search(
       taskEmbedding,
       5,
       { type: VectorType.CONVERSATION, agentId }
     );
 
-    // 6. Search corrections (procedural memory / learned rules)
+    // 7. Search corrections (procedural memory / learned rules)
     const corrections: VectorResult[] = await this.vectorStore.search(
       taskEmbedding,
       3,
@@ -82,6 +110,7 @@ export class ContextBuilder {
       pastExperience,
       corrections,
       lightragAvailable,
+      openclawMemory: openclawMemory || undefined,
     };
   }
 
@@ -97,6 +126,13 @@ export class ContextBuilder {
     // Role / SOP
     sections.push("=== ROLE ===");
     sections.push(ctx.agentSop);
+
+    // OpenClaw Memory (Tier 1)
+    if (ctx.openclawMemory) {
+      sections.push("");
+      sections.push("=== OPENCLAW MEMORY ===");
+      sections.push(ctx.openclawMemory);
+    }
 
     // Knowledge (LightRAG)
     sections.push("");

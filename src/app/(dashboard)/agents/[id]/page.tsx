@@ -15,6 +15,8 @@ import {
   Zap,
   Activity,
   Loader2,
+  Save,
+  X,
 } from "lucide-react";
 
 /** Agent detail type matching API response */
@@ -32,6 +34,17 @@ interface AgentDetail {
   department: { id: string; name: string };
   tasks: { id: string; description: string; status: string; createdAt: string }[];
 }
+
+/** Model presets matching wizard */
+const MODEL_PRESETS = [
+  { provider: "gemini", label: "Gemini 2.5 Flash", value: "gemini/gemini-2.5-flash" },
+  { provider: "gemini", label: "Gemini 2.5 Pro", value: "gemini/gemini-2.5-pro" },
+  { provider: "openai", label: "GPT-4o", value: "openai/gpt-4o" },
+  { provider: "openai", label: "GPT-4o Mini", value: "openai/gpt-4o-mini" },
+  { provider: "openrouter", label: "Gemini Flash (OpenRouter)", value: "openrouter/google/gemini-2.5-flash" },
+  { provider: "ollama", label: "Qwen 2.5 7B (Local)", value: "ollama/qwen2.5:7b" },
+  { provider: "ollama-lan", label: "Qwen 3.5 35B (LAN)", value: "ollama-lan/Qwen3.5-35B-A3B-Coder" },
+];
 
 /** Status badge map */
 const STATUS_COLORS: Record<string, { color: string; bg: string }> = {
@@ -54,6 +67,13 @@ export default function AgentDetailPage() {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<"chat" | "tasks" | "profile" | "pipeline">("profile");
 
+  // Edit state
+  const [editing, setEditing] = useState(false);
+  const [editModel, setEditModel] = useState("");
+  const [editSop, setEditSop] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [saveMsg, setSaveMsg] = useState<string | null>(null);
+
   useEffect(() => {
     async function fetchAgent() {
       try {
@@ -70,6 +90,47 @@ export default function AgentDetailPage() {
     }
     fetchAgent();
   }, [agentId]);
+
+  const startEditing = () => {
+    if (!agent) return;
+    setEditModel(agent.model);
+    setEditSop(agent.sop);
+    setEditing(true);
+    setSaveMsg(null);
+  };
+
+  const cancelEditing = () => {
+    setEditing(false);
+    setSaveMsg(null);
+  };
+
+  const saveChanges = async () => {
+    if (!agent) return;
+    setSaving(true);
+    setSaveMsg(null);
+    try {
+      const res = await fetch(`/api/agents/${agent.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: editModel,
+          sop: editSop,
+        }),
+      });
+      const json = await res.json();
+      if (res.ok) {
+        setAgent((prev) => prev ? { ...prev, model: editModel, sop: editSop } : prev);
+        setEditing(false);
+        setSaveMsg("✅ Saved successfully" + (json.data?.openclawSynced ? " (synced to OpenClaw)" : ""));
+      } else {
+        setSaveMsg(`❌ ${json.error?.message ?? "Save failed"}`);
+      }
+    } catch (err) {
+      setSaveMsg(`❌ ${err instanceof Error ? err.message : "Network error"}`);
+    } finally {
+      setSaving(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -128,22 +189,88 @@ export default function AgentDetailPage() {
         ))}
       </div>
 
+      {/* Save message */}
+      {saveMsg && (
+        <div className={`px-4 py-2 rounded-lg text-sm ${saveMsg.startsWith("✅") ? "bg-green-500/10 text-green-400 border border-green-500/20" : "bg-red-500/10 text-red-400 border border-red-500/20"}`}>
+          {saveMsg}
+        </div>
+      )}
+
       {/* Tab Content */}
       {activeTab === "profile" && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Agent Info */}
           <div className="p-6 bg-[#1A1F2B] border border-[#2A303C] rounded-xl space-y-4">
-            <h2 className="text-lg font-semibold text-white flex items-center gap-2">
-              <Cpu className="w-5 h-5 text-blue-400" /> Agent Profile
-            </h2>
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-semibold text-white flex items-center gap-2">
+                <Cpu className="w-5 h-5 text-blue-400" /> Agent Profile
+              </h2>
+              {!editing ? (
+                <button
+                  onClick={startEditing}
+                  className="px-3 py-1.5 bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/30 text-blue-400 rounded-lg text-xs font-medium transition-all"
+                >
+                  Edit
+                </button>
+              ) : (
+                <div className="flex gap-2">
+                  <button
+                    onClick={saveChanges}
+                    disabled={saving}
+                    className="px-3 py-1.5 bg-green-500/15 hover:bg-green-500/25 border border-green-500/30 text-green-400 rounded-lg text-xs font-medium transition-all flex items-center gap-1 disabled:opacity-40"
+                  >
+                    {saving ? <Loader2 size={12} className="animate-spin" /> : <Save size={12} />}
+                    Save
+                  </button>
+                  <button
+                    onClick={cancelEditing}
+                    className="px-3 py-1.5 bg-gray-500/10 hover:bg-gray-500/20 border border-gray-500/30 text-gray-400 rounded-lg text-xs font-medium transition-all flex items-center gap-1"
+                  >
+                    <X size={12} /> Cancel
+                  </button>
+                </div>
+              )}
+            </div>
             <div className="space-y-3">
               <div>
                 <label className="text-xs text-gray-500 uppercase tracking-wider">Model</label>
-                <p className="text-sm text-gray-300 font-mono mt-0.5">{agent.model}</p>
+                {editing ? (
+                  <div className="mt-1 space-y-2">
+                    <select
+                      value={MODEL_PRESETS.some((p) => p.value === editModel) ? editModel : "__custom__"}
+                      onChange={(e) => {
+                        if (e.target.value !== "__custom__") setEditModel(e.target.value);
+                      }}
+                      className="w-full px-3 py-2 bg-[#0E1117] border border-[#2A303C] rounded-lg text-sm text-gray-200 outline-none focus:border-blue-500/50"
+                    >
+                      {MODEL_PRESETS.map((p) => (
+                        <option key={p.value} value={p.value}>{p.label}</option>
+                      ))}
+                      <option value="__custom__">Custom…</option>
+                    </select>
+                    <input
+                      value={editModel}
+                      onChange={(e) => setEditModel(e.target.value)}
+                      placeholder="provider/model-name"
+                      className="w-full px-3 py-2 bg-[#0E1117] border border-[#2A303C] rounded-lg text-sm text-gray-200 font-mono outline-none focus:border-blue-500/50"
+                    />
+                  </div>
+                ) : (
+                  <p className="text-sm text-gray-300 font-mono mt-0.5">{agent.model}</p>
+                )}
               </div>
               <div>
                 <label className="text-xs text-gray-500 uppercase tracking-wider">SOP</label>
-                <p className="text-sm text-gray-300 mt-0.5 whitespace-pre-wrap">{agent.sop || "Not defined"}</p>
+                {editing ? (
+                  <textarea
+                    value={editSop}
+                    onChange={(e) => setEditSop(e.target.value)}
+                    rows={4}
+                    className="w-full mt-1 px-3 py-2 bg-[#0E1117] border border-[#2A303C] rounded-lg text-sm text-gray-200 outline-none focus:border-blue-500/50 resize-y"
+                  />
+                ) : (
+                  <p className="text-sm text-gray-300 mt-0.5 whitespace-pre-wrap">{agent.sop || "Not defined"}</p>
+                )}
               </div>
               <div className="flex gap-4">
                 <div>

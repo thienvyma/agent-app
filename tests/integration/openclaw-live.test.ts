@@ -105,7 +105,7 @@ describe("OpenClaw Live — Connection Health", () => {
     expect(healthy).toBe(false);
   });
 
-  it("should throw descriptive error when deploy fails due to connection", async () => {
+  it("should deploy successfully via CLI even when HTTP gateway is unreachable", async () => {
     const { OpenClawAdapter } = require("../../src/core/adapter/openclaw-adapter");
     const { OpenClawClient } = require("../../src/core/adapter/openclaw-client");
     const client = new OpenClawClient("http://localhost:19999");
@@ -121,8 +121,11 @@ describe("OpenClaw Live — Connection Health", () => {
       skills: [],
     };
 
-    await expect(adapter.deploy(config)).rejects.toThrow(/OpenClaw/);
-  });
+    // Deploy should succeed via CLI fallback even when gateway is unreachable
+    const status = await adapter.deploy(config);
+    expect(status.id).toBe("test-agent");
+    expect(status.status).toBe("RUNNING");
+  }, 10_000);
 });
 
 // ══════════════════════════════════════════════

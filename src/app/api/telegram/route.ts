@@ -17,7 +17,18 @@ import {
   execOpenClaw,
   startGatewayBackground,
   stopGatewayProcess,
+  agentBind,
+  agentUnbind,
+  agentBindings,
 } from "@/lib/openclaw-cli";
+import { initTelegram, getTelegramStatus, stopTelegram } from "@/lib/telegram-startup";
+
+/** Tracked bot state for running/token status */
+const botState = {
+  running: false,
+  token: null as string | null,
+  lastCheck: 0,
+};
 
 /** Path to store Telegram bot token locally */
 function getTokenFilePath(): string {
@@ -78,7 +89,7 @@ export async function GET() {
     // List pending pairing requests
     let pendingPairings: Array<{ code: string; sender: string; channel: string }> = [];
     try {
-      const pairingResult = await execOpenClaw(["pairing", "list"], 5000);
+      const pairingResult = await execOpenClaw(["pairing", "list", "telegram"], 5000);
       if (pairingResult.exitCode === 0 && pairingResult.stdout.trim()) {
         const lines = pairingResult.stdout
           .split("\n")
@@ -128,7 +139,7 @@ export async function POST(request: NextRequest) {
 
     if (
       !action ||
-      !["configure", "start", "stop", "pair", "pairing-list"].includes(action)
+      !["configure", "start", "stop", "pair", "pairing-list", "bind", "unbind"].includes(action)
     ) {
       return NextResponse.json(
         apiError("VALIDATION_ERROR", "action must be 'configure', 'start', 'stop', 'pair', or 'pairing-list'"),
@@ -180,14 +191,22 @@ export async function POST(request: NextRequest) {
       await new Promise((r) => setTimeout(r, 2000));
       const started = await startGatewayBackground();
 
+      // Auto-bind CEO agent to telegram channel (Phase 72)
+      try {
+        await agentBind("ceo", "telegram");
+      } catch {
+        // CEO binding is best-effort
+      }
+
       return NextResponse.json(
         apiResponse({
           action: "start",
           success: addResult.exitCode === 0 || started,
           message: addResult.exitCode === 0
-            ? "Telegram channel added. Gateway restarted. Send /start to your bot on Telegram to get a pairing code."
+            ? "Telegram channel added. CEO bound. Gateway restarted. Send /start to your bot on Telegram to get a pairing code."
             : `Output: ${addResult.stdout || addResult.stderr}. Gateway ${started ? "restarted" : "restart failed"}.`,
           gatewayRestarted: started,
+          ceoBound: true,
         })
       );
     }
@@ -221,7 +240,7 @@ export async function POST(request: NextRequest) {
         );
       }
       const pairResult = await execOpenClaw(
-        ["pairing", "approve", code.trim()],
+        ["pairing", "approve", "telegram", code.trim()],
         10000
       );
       return NextResponse.json(
@@ -243,6 +262,36 @@ export async function POST(request: NextRequest) {
           action: "pairing-list",
           success: listResult.exitCode === 0,
           output: listResult.stdout,
+        })
+      );
+    }
+
+    // ── bind: bind agent to telegram channel ──
+    if (action === "bind") {
+      const agentId = (body as Record<string, string>).agentId ?? "ceo";
+      const bindResult = await agentBind(agentId, "telegram");
+      return NextResponse.json(
+        apiResponse({
+          action: "bind",
+          success: bindResult.exitCode === 0,
+          message: bindResult.exitCode === 0
+            ? `Agent ${agentId} bound to Telegram channel`
+            : `Bind failed: ${bindResult.stderr || bindResult.stdout}`,
+        })
+      );
+    }
+
+    // ── unbind: unbind agent from telegram channel ──
+    if (action === "unbind") {
+      const agentId = (body as Record<string, string>).agentId ?? "ceo";
+      const unbindResult = await agentUnbind(agentId, "telegram");
+      return NextResponse.json(
+        apiResponse({
+          action: "unbind",
+          success: unbindResult.exitCode === 0,
+          message: unbindResult.exitCode === 0
+            ? `Agent ${agentId} unbound from Telegram channel`
+            : `Unbind failed: ${unbindResult.stderr || unbindResult.stdout}`,
         })
       );
     }

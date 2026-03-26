@@ -1,5 +1,5 @@
 /**
- * MessageBus — BullMQ-based inter-agent messaging.
+ * MessageBus — Hybrid OpenClaw + BullMQ inter-agent messaging.
  *
  * Supports 3 communication patterns (D3):
  * - Delegate: publish to 1 agent (default)
@@ -7,6 +7,7 @@
  * - Group: broadcast to multiple agents
  *
  * Messages are persisted in DB and queued via BullMQ.
+ * Enhanced (S69): optionally sends via OpenClaw CLI first (best-effort).
  *
  * @module core/messaging/message-bus
  */
@@ -17,17 +18,37 @@ import type { BusMessage, ChainStep, ChainResult } from "@/types/message";
 import type { IAgentEngine } from "@/core/adapter/i-agent-engine";
 import { Prisma } from "@prisma/client";
 
+/** CLI executor function type */
+type CliExecutor = (args: string[], timeoutMs: number) => Promise<{
+  stdout: string;
+  stderr: string;
+  exitCode: number;
+  json?: unknown;
+}>;
+
+/** MessageBus configuration */
+interface MessageBusConfig {
+  /** Optional CLI executor for OpenClaw hybrid messaging */
+  cliExecutor?: CliExecutor;
+}
+
 /**
- * Inter-agent message bus with DB persistence and queue delivery.
+ * Inter-agent message bus with DB persistence, queue delivery,
+ * and optional OpenClaw CLI hybrid messaging.
  */
 export class MessageBus {
+  private cli?: CliExecutor;
+
   constructor(
     private readonly db: PrismaClient,
-    private readonly queue: Queue
-  ) {}
+    private readonly queue: Queue,
+    config?: MessageBusConfig
+  ) {
+    this.cli = config?.cliExecutor;
+  }
 
   /**
-   * Publish a message: save to DB + add to delivery queue.
+   * Publish a message: optionally send via OpenClaw CLI, then save to DB + BullMQ.
    *
    * @param message - Message payload
    * @returns Message ID from database
@@ -37,6 +58,18 @@ export class MessageBus {
     // Validate
     if (!message.content || message.content.trim().length === 0) {
       throw new Error("Message content is required");
+    }
+
+    // Try OpenClaw CLI (best-effort, does not block DB+BullMQ)
+    if (this.cli && message.toAgentId) {
+      try {
+        await this.cli(
+          ["message", "send", "--agent", message.toAgentId, "--message", message.content],
+          30_000
+        );
+      } catch {
+        // CLI failed — continue with DB + BullMQ delivery
+      }
     }
 
     // Save to DB
