@@ -202,9 +202,13 @@ export class OpenClawAdapter implements IAgentEngine {
     const sessionKey = `agent:${agentId}:main`;
 
     // Send via HTTP client with per-agent session routing
+    // OpenClaw gateway uses agent-target routing:
+    //   model: "openclaw" → default agent
+    //   model: "openclaw/<agentId>" → specific agent
+    // The per-agent model is configured in openclaw.json, not sent in requests
     const response = await this.client.chatCompletion(
       {
-        model: config.model,
+        model: "openclaw",
         messages,
       },
       sessionKey
